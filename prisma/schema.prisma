@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  displayName    String
+  avatarClass    String   @default("wanderer") // wanderer|builder|healer|scout|teacher|keeper|bard
+  avatarEmoji    String   @default("🧭")
+  bio            String   @default("")
+  xp             Int      @default(0)
+  credits        Int      @default(0)           // cached balance; ledger is truth; update in same $transaction
+  isNpc          Boolean  @default(false)       // seeded fake adventurers for matching
+  orgId          String?
+  org            Org?     @relation(fields: [orgId], references: [id])
+  createdAt      DateTime @default(now())
+  interests      UserInterest[]
+  participations Participation[]
+  ledger         LedgerEntry[]
+  redemptions    Redemption[]
+  donations      Donation[]
+  badges         UserBadge[]
+}
+
+model Interest {
+  id    String @id @default(cuid())
+  slug  String @unique
+  label String
+  emoji String
+  users UserInterest[]
+}
+
+model UserInterest {
+  userId     String
+  interestId String
+  user       User     @relation(fields: [userId], references: [id])
+  interest   Interest @relation(fields: [interestId], references: [id])
+  @@id([userId, interestId])
+}
+
+model Org {
+  id           String  @id @default(cuid())
+  name         String
+  kind         String  // nonprofit|school|city|neighbor
+  description  String
+  emoji        String  @default("🏛️")
+  lat          Float
+  lng          Float
+  neighborhood String
+  verified     Boolean @default(true)
+  quests       Quest[]
+  members      User[]
+  causes       Cause[]
+}
+
+model QuestChain {
+  id           String  @id @default(cuid())
+  title        String
+  description  String
+  bonusCredits Int
+  quests       Quest[]
+}
+
+model Quest {
+  id            String   @id @default(cuid())
+  orgId         String
+  org           Org      @relation(fields: [orgId], references: [id])
+  title         String
+  description   String
+  category      String   // cleanup|food|education|seniors|animals|arts|environment|community
+  interestSlugs String   @default("")  // comma-separated Interest.slug tags
+  lat           Float
+  lng           Float
+  neighborhood  String
+  address       String
+  difficulty    Int      @default(1)   // 1..5
+  durationMin   Int
+  rewardCredits Int
+  rewardXp      Int
+  capacity      Int      @default(1)   // >1 = group quest ("needs N adventurers")
+  verifyCode    String               // 4 digits; shown to the giver, typed by adventurer on completion
+  status        String   @default("OPEN") // OPEN|CLOSED
+  chainId       String?
+  chainOrder    Int?
+  chain         QuestChain? @relation(fields: [chainId], references: [id])
+  createdAt     DateTime @default(now())
+  participations Participation[]
+}
+
+model Participation {
+  id          String   @id @default(cuid())
+  questId     String
+  userId      String
+  quest       Quest    @relation(fields: [questId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("ACCEPTED") // ACCEPTED|CHECKED_IN|COMPLETED|ABANDONED
+  acceptedAt  DateTime @default(now())
+  checkedInAt DateTime?
+  completedAt DateTime?
+  @@unique([questId, userId])
+}
+
+model LedgerEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  delta     Int                       // +earn / -spend
+  kind      String                    // EARN|BONUS|SPEND|DONATE
+  refType   String?                   // quest|offer|cause|chain
+  refId     String?
+  note      String
+  createdAt DateTime @default(now())
+}
+
+model Sponsor {
+  id          String  @id @default(cuid())
+  name        String
+  emoji       String
+  description String
+  lat         Float
+  lng         Float
+  offers      Offer[]
+}
+
+model Offer {
+  id          String  @id @default(cuid())
+  sponsorId   String
+  sponsor     Sponsor @relation(fields: [sponsorId], references: [id])
+  title       String
+  description String
+  costCredits Int
+  stock       Int     @default(50)
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id        String   @id @default(cuid())
+  userId    String
+  offerId   String
+  user      User     @relation(fields: [userId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
+  code      String   // e.g. "RPGB-7F3K9"
+  createdAt DateTime @default(now())
+}
+
+model Cause {
+  id            String  @id @default(cuid())
+  orgId         String
+  org           Org     @relation(fields: [orgId], references: [id])
+  title         String
+  description   String
+  goalCredits   Int
+  raisedCredits Int     @default(0)
+  donations     Donation[]
+}
+
+model Donation {
+  id        String   @id @default(cuid())
+  userId    String
+  causeId   String
+  user      User     @relation(fields: [userId], references: [id])
+  cause     Cause    @relation(fields: [causeId], references: [id])
+  amount    Int
+  createdAt DateTime @default(now())
+}
+
+model Badge {
+  id          String @id @default(cuid())
+  slug        String @unique
+  name        String
+  icon        String
+  description String
+  users       UserBadge[]
+}
+
+model UserBadge {
+  userId    String
+  badgeId   String
+  earnedAt  DateTime @default(now())
+  user      User  @relation(fields: [userId], references: [id])
+  badge     Badge @relation(fields: [badgeId], references: [id])
+  @@id([userId, badgeId])
+}

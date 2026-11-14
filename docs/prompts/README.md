@@ -9,7 +9,8 @@ One agent per phase. Phases 2, 3 and 4 run in parallel. Details in `docs/SYSTEM.
 | 1:50 | Checkpoint (you) | merge handoffs, `npm run typecheck`, `npm run db:reset`, `git commit` |
 | 2:00 | 1 agent | `phase-5-integration.md` |
 | 3:05 | Checkpoint (you) | run the demo script (SYSTEM.md §14) once end to end |
-| 3:15 | 1 agent | `phase-6-polish-qa-pitch.md` |
+| 3:05 | 1 agent (~20 min, optional) | `phase-7-supabase-vercel.md`: move data to Supabase Postgres + deploy to Vercel |
+| 3:25 | 1 agent | `phase-6-polish-qa-pitch.md` (QA the live URL too) |
 | 3:50 | **Code freeze** | rehearse |
 
 ## Launching an agent
