@@ -94,7 +94,7 @@ function toQuest(q: Raw, orgs: Raw[]): QuestDTO {
   const o = orgs.find((x) => x.id === q.orgId) ?? {};
   return {
     id: q.id, title: q.title, description: q.description, category: CATEGORY[q.category] ?? 'community',
-    interestSlugs: q.tags ?? [], lat: q.lat, lng: q.lng, neighborhood: neighborhoodOf(q.lat, q.lng), address: q.address,
+    interestSlugs: q.tags ?? [], lat: q.lat, lng: q.lng, neighborhood: String(q.address || '').replace(/\s*\(demo site\)/, '').split(',')[0].replace(/ Birmingham$/, '') || neighborhoodOf(q.lat, q.lng), address: q.address,
     difficulty: Math.min(5, Math.max(1, q.difficulty)) as QuestDTO['difficulty'], durationMin: q.durationMin,
     rewardCredits: q.rewardCredits, rewardXp: q.rewardXp, capacity: q.capacity, participantCount: q.capacity - q.spotsLeft,
     spotsLeft: q.spotsLeft, status: 'OPEN',
