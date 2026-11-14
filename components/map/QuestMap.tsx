@@ -11,6 +11,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import './map.css';
 import type { QuestDTO, SponsorDTO } from '@/lib/contracts';
 import { CATEGORY_META } from '@/lib/constants';
+import { startDrive, type DriveHandle } from '@/components/mascot/driveCar';
 
 export interface AreaSel { name: string; raw: string }
 export interface QuestMapProps {
@@ -26,6 +27,10 @@ export interface QuestMapProps {
   onAreaSelect?: (a: AreaSel | null) => void;
   /** questId -> district name, so the page can filter its list the same way the map does. */
   onQuestAreas?: (m: Record<string, string>) => void;
+  /** When true, opening a quest drives the avocado car there (camera follows) instead of a plain fly-to. */
+  animate?: boolean;
+  /** Fired when the car parks, or immediately if the map jumps instead of driving. */
+  onDriveArrive?: () => void;
 }
 
 // Warm theme (values from components/ui/cozy.css)
@@ -56,15 +61,20 @@ const bang = (q: QuestDTO) => (q.myStatus === 'COMPLETED' ? '✓' : q.myStatus =
 const pinClass = (q: QuestDTO, sel: boolean) =>
   'qpin' + (q.myStatus === 'COMPLETED' ? ' done' : q.myStatus === 'ACCEPTED' || q.myStatus === 'CHECKED_IN' ? ' mine' : q.spotsLeft === 0 ? ' full' : '') + (sel ? ' sel' : '');
 
-export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSelect, onQuestAreas, className }: QuestMapProps) {
+export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSelect, onQuestAreas, className, animate = false, userLocation, onDriveArrive }: QuestMapProps) {
   const host = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MLMap | null>(null);
   const mlRef = useRef<typeof import('maplibre-gl') | null>(null);
   const markers = useRef(new Map<string, Marker>());
+  const driveRef = useRef<DriveHandle | null>(null);
   const areasRef = useRef<Area[]>([]);
   const membership = useRef<Record<string, string>>({});
-  const cb = useRef({ onSelect, onAreaSelect, onQuestAreas, area, selectedId });
-  cb.current = { onSelect, onAreaSelect, onQuestAreas, area, selectedId };
+  const cb = useRef({ onSelect, onAreaSelect, onQuestAreas, onDriveArrive, area, selectedId });
+  cb.current = { onSelect, onAreaSelect, onQuestAreas, onDriveArrive, area, selectedId };
+  const animateRef = useRef(animate);
+  animateRef.current = animate;
+  const userLocRef = useRef(userLocation);
+  userLocRef.current = userLocation;
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [hover, setHover] = useState('');
@@ -177,6 +187,8 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
     })();
     return () => {
       cancelled = true;
+      driveRef.current?.cancel();
+      driveRef.current = null;
       markers.current.forEach((mk) => mk.remove());
       markers.current.clear();
       map?.remove();
@@ -237,13 +249,34 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
     if (!area) map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: 0 }, duration: 400 });
   }, [area, ready]);
 
-  // ---- fly to the selected quest ----
+  // ---- fly to the selected quest, or drive the avocado car when the ride animation is on ----
   useEffect(() => {
     const map = mapRef.current;
     if (!ready || !map) return;
     const q = selectedId ? quests.find((x) => x.id === selectedId) : null;
-    if (q) map.flyTo({ center: [q.lng, q.lat], zoom: Math.max(map.getZoom(), 15.8), pitch: 60, duration: 1200, padding: { top: 0, left: 0, right: 0, bottom: Math.round(window.innerHeight * 0.4) } });
-    else map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: 0 }, duration: 500 });
+    // A new selection (or deselect) interrupts any ride in progress; its position becomes the next start.
+    const resumeFrom = driveRef.current?.cancel() ?? null;
+    driveRef.current = null;
+    const ml = mlRef.current;
+    if (q) {
+      const padding = { top: 0, left: 0, right: 0, bottom: Math.round(window.innerHeight * 0.4) };
+      // Start where you are: an in-flight car, else the user's location, else wherever the map is centred.
+      const c = map.getCenter();
+      const ul = userLocRef.current;
+      const from: [number, number] = resumeFrom ?? (ul ? [ul.lng, ul.lat] : [c.lng, c.lat]);
+      const far = Math.hypot((from[0] - q.lng) * 91, (from[1] - q.lat) * 111) > 0.03; // > ~30 m
+      if (animateRef.current && ml && far) {
+        driveRef.current = startDrive(map, ml, {
+          from, to: [q.lng, q.lat], zoomTo: 15.8, pitchTo: 60, padding,
+          onArrive: () => cb.current.onDriveArrive?.(),
+        });
+      } else {
+        map.flyTo({ center: [q.lng, q.lat], zoom: Math.max(map.getZoom(), 15.8), pitch: 60, duration: 1200, padding });
+        cb.current.onDriveArrive?.();
+      }
+    } else {
+      map.easeTo({ padding: { top: 0, left: 0, right: 0, bottom: 0 }, duration: 500 });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId, ready]);
 

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BottomNav, Hud, HudSkeleton } from '@/components/shell';
+import { AvocadoSplash } from '@/components/mascot';
 import { useMe } from '@/lib/client/api';
 
 /** Client-side auth gate: no session -> /login. Floating HUD + bottom nav on every page. */
@@ -18,6 +19,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (unauthenticated) return null;
   return (
     <div className="relative min-h-screen">
+      {/* short avocado loading-bar page, once per browser session; waits for the profile to load */}
+      <AvocadoSplash ready={!!me} />
       <div className="fixed left-3 top-3 z-30">{me ? <Hud data={me} /> : <HudSkeleton />}</div>
       <main>{children}</main>
       <BottomNav />

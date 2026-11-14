@@ -1,0 +1,111 @@
+/* Avocado mascot kit. Paper-cartoon look: white sticker outlines + hard offset shadows.
+   Colours fall back to the cozy kit tokens (components/ui/cozy.css) when present. */
+
+.avo, .avo-car svg { filter: drop-shadow(2px 3px 0 rgba(74, 51, 40, 0.28)); overflow: visible; }
+.avo * { transform-box: fill-box; }
+
+/* ---------- idle: blink ---------- */
+.avo-eyes { transform-origin: center; animation: avo-blink 4s infinite; }
+@keyframes avo-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+
+/* ---------- walk cycle ---------- */
+.avo--walk .avo-body { transform-origin: 58px 140px; transform-box: view-box; animation: avo-bob 0.56s ease-in-out infinite; }
+@keyframes avo-bob {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+.avo--walk .avo-foot { animation: avo-step 0.56s ease-in-out infinite; }
+.avo--walk .avo-foot--r { animation-delay: -0.28s; }
+@keyframes avo-step {
+  0% { transform: translate(-5px, 0); }
+  25% { transform: translate(2px, -7px); }
+  50% { transform: translate(6px, 0); }
+  100% { transform: translate(-5px, 0); }
+}
+.avo--walk .avo-arm--l { transform-origin: 26px 88px; transform-box: view-box; animation: avo-swing 0.56s ease-in-out infinite; }
+.avo--walk .avo-arm--r { transform-origin: 90px 86px; transform-box: view-box; animation: avo-swing 0.56s ease-in-out infinite reverse; }
+@keyframes avo-swing { 0%, 100% { transform: rotate(-10deg); } 50% { transform: rotate(12deg); } }
+.avo--walk .avo-bag { transform-origin: 107px 110px; transform-box: view-box; animation: avo-bag-swing 0.56s ease-in-out infinite; }
+@keyframes avo-bag-swing { 0%, 100% { transform: rotate(8deg); } 50% { transform: rotate(-12deg); } }
+
+/* ---------- loader ---------- */
+.avo-loader { --_ink: var(--cz-ink, #4a3328); display: grid; justify-items: center; gap: 14px; color: var(--_ink); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.avo-loader--full {
+  position: fixed; inset: 0; z-index: 9999; align-content: center;
+  background: radial-gradient(circle at 50% 38%, var(--cz-cream, #fff6e3) 0%, var(--cz-paper-2, #fbebc8) 100%);
+  transition: opacity 0.4s ease;
+}
+.avo-loader--fade { opacity: 0; pointer-events: none; }
+.avo-loader__title { margin: 0; font-size: 13px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; opacity: 0.55; }
+.avo-loader__stage { position: relative; width: min(340px, 78vw); padding-top: 100px; }
+.avo-loader__walker { position: absolute; bottom: 14px; left: 0; width: 0; display: grid; justify-items: center; }
+.avo-loader__walker > svg { transform: translateX(0); position: absolute; bottom: 0; left: -42px; }
+.avo-loader__track {
+  position: relative; height: 18px; border-radius: 999px; overflow: hidden;
+  background: var(--cz-paper, #fffdf6); border: 3px solid var(--_ink); box-shadow: 0 3px 0 rgba(74, 51, 40, 0.25);
+}
+.avo-loader__fill {
+  height: 100%; border-radius: 999px; background: repeating-linear-gradient(135deg, #23cc6b 0 10px, #3ddc84 10px 20px);
+  background-size: 28px 28px; animation: avo-stripes 0.6s linear infinite;
+}
+@keyframes avo-stripes { to { background-position: 28px 0; } }
+.avo-loader__meta { display: flex; gap: 8px; align-items: baseline; font-weight: 700; font-size: 15px; }
+.avo-loader__pct { font-variant-numeric: tabular-nums; opacity: 0.6; font-size: 13px; }
+.avo-loader__dots::after { content: ''; animation: avo-dots 1.2s steps(4) infinite; }
+@keyframes avo-dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75%, 100% { content: '...'; } }
+/* indeterminate mode (no `progress` prop): fill + walker loop on their own, pure CSS */
+.avo-loader--auto .avo-loader__fill { width: 100%; animation: avo-stripes 0.6s linear infinite, avo-auto-fill 2.6s cubic-bezier(0.45, 0.05, 0.4, 1) infinite; transform-origin: left; }
+.avo-loader--auto .avo-loader__walker { animation: avo-auto-walk 2.6s cubic-bezier(0.45, 0.05, 0.4, 1) infinite; }
+@keyframes avo-auto-fill { 0% { transform: scaleX(0.02); } 85%, 100% { transform: scaleX(1); } }
+@keyframes avo-auto-walk { 0% { left: 2%; opacity: 0; } 8% { opacity: 1; } 85% { left: 100%; opacity: 1; } 100% { left: 100%; opacity: 0; } }
+
+/* ---------- car ---------- */
+.avo-car { position: relative; display: inline-block; line-height: 0; }
+.avo-car-body { transform-box: view-box; }
+.avo-car--drive .avo-car-body { animation: avo-car-bounce 0.32s ease-in-out infinite; }
+@keyframes avo-car-bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px) rotate(-0.6deg); } }
+.avo-car--drive .avo-wheel { animation: avo-spin 0.5s linear infinite; }
+@keyframes avo-spin { to { transform: rotate(360deg); } }
+.avo-puff {
+  position: absolute; left: 4%; bottom: 14%; width: 14px; height: 14px; border-radius: 50%; opacity: 0;
+  background: #fff; box-shadow: 1px 2px 0 rgba(74, 51, 40, 0.25);
+}
+.avo-car--drive .avo-puff { animation: avo-puff 0.9s ease-out infinite; }
+.avo-puff--2 { animation-delay: 0.3s !important; }
+.avo-puff--3 { animation-delay: 0.6s !important; }
+@keyframes avo-puff {
+  0% { transform: translate(0, 0) scale(0.4); opacity: 0.95; }
+  100% { transform: translate(-46px, -14px) scale(1.5); opacity: 0; }
+}
+
+/* map marker wrapper (driveCar.tsx) */
+.avo-drive { width: 0; height: 0; pointer-events: none; z-index: 8; }
+.avo-drive__rot { position: absolute; left: -60px; bottom: -22px; width: 120px; transform-origin: 50% 80%; transition: opacity 0.5s ease; }
+.avo-drive__rot.is-leaving { opacity: 0; }
+.avo-drive__bubble {
+  position: absolute; left: 50%; bottom: 78px; transform: translateX(-50%) rotate(-3deg); white-space: nowrap;
+  background: #fffdf6; color: #4a3328; border: 2.5px solid #4a3328; border-radius: 12px; padding: 4px 10px;
+  font: 800 12px system-ui, sans-serif; box-shadow: 2px 3px 0 rgba(74, 51, 40, 0.3); animation: avo-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes avo-pop { from { transform: translateX(-50%) scale(0.2) rotate(-3deg); opacity: 0; } }
+
+/* ---------- animation toggle ---------- */
+.avo-toggle {
+  display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px 6px 8px; cursor: pointer;
+  background: var(--cz-paper, #fffdf6); color: var(--cz-ink, #4a3328); border: 2.5px solid var(--cz-ink, #4a3328);
+  border-radius: 999px; box-shadow: 0 3px 0 rgba(74, 51, 40, 0.3); font: 800 12px system-ui, sans-serif;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.avo-toggle:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(74, 51, 40, 0.3); }
+.avo-toggle:focus-visible { outline: 3px solid #23cc6b; outline-offset: 2px; }
+.avo-toggle__switch { position: relative; width: 30px; height: 16px; border-radius: 999px; background: #c9bba8; transition: background 0.15s; }
+.avo-toggle__switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: transform 0.15s; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.25); }
+.avo-toggle[aria-pressed='true'] .avo-toggle__switch { background: #23cc6b; }
+.avo-toggle[aria-pressed='true'] .avo-toggle__switch::after { transform: translateX(14px); }
+
+@media (max-width: 520px) { .avo-toggle__label { display: none; } .avo-toggle { gap: 6px; } } /* icon-only on phones */
+
+@media (prefers-reduced-motion: reduce) {
+  .avo--walk .avo-body, .avo--walk .avo-foot, .avo--walk .avo-arm, .avo--walk .avo-bag,
+  .avo-loader__fill, .avo-car--drive .avo-car-body, .avo-car--drive .avo-wheel, .avo-car--drive .avo-puff { animation: none; }
+}

@@ -8,6 +8,7 @@ import { QuestSheet } from '@/components/quest';
 import QuestSidebar from '@/components/quest/QuestSidebar';
 import type { Category } from '@/lib/contracts';
 import { matchesDate, type DateFilter } from '@/lib/dates';
+import { AnimationToggle, useAnimationPref } from '@/components/mascot';
 import { useMe, useQuest, useQuests } from '@/lib/client/api';
 
 // MapLibre needs the browser: never render the canvas on the server.
@@ -21,6 +22,7 @@ export default function MapHome() {
   const [dateFilter, setDateFilter] = useState<DateFilter>({ kind: 'any' });
   const [area, setArea] = useState<{ name: string; raw: string } | null>(null);
   const [membership, setMembership] = useState<Record<string, string>>({});
+  const [rideAnimation] = useAnimationPref();
   const { data: me } = useMe();
   const { data: allQuests, error, mutate } = useQuests(category ? { category } : undefined);
   const quests = useMemo(() => allQuests?.filter((q) => matchesDate(q, dateFilter)), [allQuests, dateFilter]);
@@ -30,8 +32,10 @@ export default function MapHome() {
 
   const select = useCallback((id: string | null) => {
     setSelected(id);
-    if (id) { setSnap('full'); setSidebar(false); }
-  }, []);
+    // The sheet opens full (latest map behavior). With the ride on, hold it at peek until the car parks
+    // so the drive stays visible, then onDriveArrive snaps it open.
+    if (id) { setSnap(rideAnimation ? 'peek' : 'full'); setSidebar(false); }
+  }, [rideAnimation]);
 
   return (
     <div className="fixed inset-0">
@@ -44,7 +48,11 @@ export default function MapHome() {
         area={area}
         onAreaSelect={(a) => { setArea(a); if (a) setSelected(null); }}
         onQuestAreas={setMembership}
+        animate={rideAnimation}
+        onDriveArrive={() => setSnap('full')}
       />
+      {/* below the district chip (top-right) so the two never sit on top of each other */}
+      <AnimationToggle className="fixed right-3 top-[84px] z-30" />
 
       {/* sidebar toggle: small, out of the way */}
       <button
