@@ -45,7 +45,7 @@ export default function QuestsPage() {
       ) : tab === 'mine' ? (
         <div className="space-y-4" data-testid="my-activities">
           {mineCount === 0 && (
-            <EmptyState emoji="🧭" title="No activities yet" message="Accept a quest and it shows up here." action={<Button onClick={() => setTab('all')}>Browse quests</Button>} />
+            <EmptyState emoji="🧭" title="No activities yet" message="Sign up for a quest and it shows up here." action={<Button onClick={() => setTab('all')}>Browse quests</Button>} />
           )}
           {active.length > 0 && (
             <section className="space-y-3">

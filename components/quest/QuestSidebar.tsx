@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { Button, EmptyState, SkeletonCard } from '@/components/ui';
 import { CATEGORIES, type Category, type QuestDTO } from '@/lib/contracts';
 import { CATEGORY_META } from '@/lib/constants';
+import type { DateFilter } from '@/lib/dates';
 import CategoryChip from './CategoryChip';
 import QuestCard from './QuestCard';
 
@@ -15,6 +16,8 @@ export interface QuestSidebarProps {
   error?: boolean;
   onRetry?: () => void;
   category?: Category;
+  dateFilter: DateFilter;
+  onDate: (f: DateFilter) => void;
   onCategory: (c: Category | undefined) => void;
   area: string | null;
   onClearArea: () => void;
@@ -23,7 +26,7 @@ export interface QuestSidebarProps {
 }
 
 /** Left drawer: category filters + the quest list. Closed by default so the map stays clear. */
-export default function QuestSidebar({ open, onClose, quests, loading, error, onRetry, category, onCategory, area, onClearArea, selectedId, onSelect }: QuestSidebarProps) {
+export default function QuestSidebar({ open, onClose, quests, loading, error, onRetry, category, dateFilter, onDate, onCategory, area, onClearArea, selectedId, onSelect }: QuestSidebarProps) {
   return (
     <aside
       aria-hidden={!open}
@@ -37,7 +40,24 @@ export default function QuestSidebar({ open, onClose, quests, loading, error, on
       </div>
 
       <div className="px-4 pb-3">
-        <div className="cz-eyebrow mb-2">Filter</div>
+        <div className="cz-eyebrow mb-2">When</div>
+        <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="date-filters">
+          {([['any', 'Any day'], ['today', 'Today'], ['tomorrow', 'Tomorrow'], ['week', 'Next 7 days']] as const).map(([k, label]) => (
+            <button key={k} className="cz-chip" aria-pressed={dateFilter.kind === k} onClick={() => onDate({ kind: k })}>
+              {label}
+            </button>
+          ))}
+          <label className="cz-chip" aria-pressed={dateFilter.kind === 'date'}>
+            <span className="sr-only">Pick a date</span>
+            <input
+              type="date"
+              value={dateFilter.kind === 'date' ? dateFilter.date : ''}
+              onChange={(e) => onDate(e.target.value ? { kind: 'date', date: e.target.value } : { kind: 'any' })}
+              className="bg-transparent text-sm outline-none"
+            />
+          </label>
+        </div>
+        <div className="cz-eyebrow mb-2">Type</div>
         <div className="flex flex-wrap gap-2" data-testid="filters">
           {CATEGORIES.map((c) => {
             const m = CATEGORY_META[c];
@@ -62,7 +82,7 @@ export default function QuestSidebar({ open, onClose, quests, loading, error, on
         ) : loading || !quests ? (
           <SkeletonCard />
         ) : quests.length === 0 ? (
-          <EmptyState title="No quests here" message={area ? 'Try another district or clear the filter.' : 'Try another category.'} />
+          <EmptyState title="No quests here" message={area ? 'Try another district or clear the filter.' : 'Try another day or category.'} />
         ) : (
           <>
             <div className="text-xs text-muted">{quests.length} quest{quests.length === 1 ? '' : 's'}</div>

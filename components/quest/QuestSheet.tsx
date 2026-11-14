@@ -7,6 +7,9 @@ import { ApiError } from '@/lib/contracts';
 import type { CompleteResultDTO, QuestDetailDTO } from '@/lib/contracts';
 import { abandonQuest, acceptQuest, checkIn, completeQuest, useMe } from '@/lib/client/api';
 import XpGain from './XpGain';
+import { CalendarDays } from 'lucide-react';
+import Link from 'next/link';
+import { fmtDay, fmtTime, fmtWhen, googleCalendarUrl, todayStr } from '@/lib/dates';
 import BuildingView from './BuildingView';
 import PartyVibes from '@/components/social/PartyVibes';
 import PartyStrip from '@/components/social/PartyStrip';
@@ -27,6 +30,7 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
   const [before, setBefore] = useState<{ level: number; into: number; need: number } | null>(null);
   const m = CATEGORY_META[quest.category];
   const st = quest.myStatus;
+  const isToday = quest.date === todayStr();
 
   async function run<T>(fn: () => Promise<T>, okMsg?: string) {
     setBusy(true);
@@ -68,6 +72,9 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
       <div className="text-sm text-muted">
         {quest.org.emoji} {quest.org.name} · {quest.address} · {quest.durationMin} min
       </div>
+      <div className="flex items-center gap-2 rounded-2xl bg-[var(--cz-paper-2)] px-3 py-2 text-sm font-bold" data-testid="quest-when">
+        <CalendarDays size={18} aria-hidden /> {fmtWhen(quest)}
+      </div>
       <BuildingView quest={quest} />
       <p className="text-sm">{quest.description}</p>
       <RewardBadge credits={quest.rewardCredits} xp={quest.rewardXp} />
@@ -81,30 +88,37 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
           variant="leaf"
           loading={busy}
           disabled={quest.spotsLeft <= 0 || quest.status !== 'OPEN'}
-          onClick={() => {
-            // open the tab inside the click (popup blockers), send it to directions once the accept succeeds
-            const w = window.open('', '_blank');
-            void run(() => acceptQuest(quest.id), 'Quest accepted! Opening directions.').then((r) => {
-              if (!w) return;
-              if (r) w.location.href = navUrl(quest); else w.close();
-            });
-          }}
+          onClick={() => run(() => acceptQuest(quest.id), `You're signed up for ${fmtDay(quest.date)} at ${fmtTime(quest.time)}. Added to My Activities.`)}
         >
-          {quest.spotsLeft <= 0 ? 'Quest full' : 'Accept quest and get directions'}
+          {quest.spotsLeft <= 0 ? 'Quest full' : 'Sign up'}
         </Button>
       )}
       {(st === 'ACCEPTED' || st === 'CHECKED_IN') && (
-        <a className="cz-btn cz-btn--sky cz-btn--block" href={navUrl(quest)} target="_blank" rel="noopener noreferrer">
-          Navigate in Google Maps
-        </a>
+        <div className="grid grid-cols-2 gap-2">
+          <a className="cz-btn cz-btn--sky cz-btn--sm" href={navUrl(quest)} target="_blank" rel="noopener noreferrer">
+            Directions
+          </a>
+          <a className="cz-btn cz-btn--secondary cz-btn--sm" href={googleCalendarUrl(quest)} target="_blank" rel="noopener noreferrer">
+            Add to Google Calendar
+          </a>
+          <Link className="cz-btn cz-btn--ghost cz-btn--sm col-span-2" href="/activities">
+            See it in My Activities
+          </Link>
+        </div>
       )}
       {st === 'ACCEPTED' && (
         <div className="flex gap-2">
-          <Button block loading={busy} onClick={doCheckIn}>
-            Check in
-          </Button>
-          <Button variant="ghost" disabled={busy} onClick={() => run(() => abandonQuest(quest.id), 'Quest abandoned')}>
-            Abandon
+          {isToday ? (
+            <Button block loading={busy} onClick={doCheckIn}>
+              Check in
+            </Button>
+          ) : (
+            <Button block disabled data-testid="scheduled-btn" aria-label={`Scheduled for ${fmtDay(quest.date)}. Check-in opens that day.`}>
+              Scheduled · {fmtDay(quest.date)}
+            </Button>
+          )}
+          <Button variant="ghost" disabled={busy} onClick={() => run(() => abandonQuest(quest.id), 'Sign-up cancelled')}>
+            Cancel
           </Button>
         </div>
       )}
@@ -126,8 +140,8 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
             <Button block variant="leaf" loading={busy} disabled={!code.trim()} onClick={doComplete}>
               Complete quest
             </Button>
-            <Button variant="ghost" disabled={busy} onClick={() => run(() => abandonQuest(quest.id), 'Quest abandoned')}>
-              Abandon
+            <Button variant="ghost" disabled={busy} onClick={() => run(() => abandonQuest(quest.id), 'Sign-up cancelled')}>
+              Cancel
             </Button>
           </div>
         </div>

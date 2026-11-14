@@ -99,7 +99,7 @@ function toQuest(q: Raw, orgs: Raw[]): QuestDTO {
     rewardCredits: q.rewardCredits, rewardXp: q.rewardXp, capacity: q.capacity, participantCount: q.capacity - q.spotsLeft,
     spotsLeft: q.spotsLeft, status: 'OPEN',
     org: { id: o.id ?? q.orgId, name: o.name ?? 'Partner', emoji: o.emoji ?? '📍', verified: true },
-    chain: null, myStatus: q.myStatus ?? null,
+    chain: null, myStatus: q.myStatus ?? null, date: q.date, time: q.time,
   };
 }
 

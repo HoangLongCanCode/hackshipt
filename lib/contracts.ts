@@ -18,6 +18,8 @@ export interface QuestDTO {
   org: { id: string; name: string; emoji: string; verified: boolean; imageUrl?: string };
   chain?: { id: string; title: string; order: number; total: number } | null;
   myStatus?: MyStatus | null;
+  /** Local Birmingham date (YYYY-MM-DD) and start time (HH:MM). */
+  date: string; time: string;
 }
 export interface PartyMemberDTO { userId: string; displayName: string; avatarEmoji: string; avatarClass: AvatarClass; level: number; favoriteArtist?: string; hobby?: string }
 export interface QuestDetailDTO extends QuestDTO { party: PartyMemberDTO[]; verifyCode?: string /* only for giver's own org */ }

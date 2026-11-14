@@ -3,7 +3,7 @@
 import '../ui/cozy.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Map as MapIcon, ScrollText, Store, User, Users, type LucideIcon } from 'lucide-react';
+import { CalendarDays, Map as MapIcon, ScrollText, Store, User, Users, type LucideIcon } from 'lucide-react';
 
 export interface NavItem {
   href: string;
@@ -15,6 +15,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { href: '/', label: 'Map', icon: MapIcon },
   { href: '/quests', label: 'Quests', icon: ScrollText },
+  { href: '/activities', label: 'Activities', icon: CalendarDays },
   { href: '/people', label: 'People', icon: Users },
   { href: '/store', label: 'Store', icon: Store },
   { href: '/profile', label: 'Profile', icon: User },

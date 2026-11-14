@@ -3,6 +3,7 @@
 import { Card, Pill } from '@/components/ui';
 import { CATEGORY_META } from '@/lib/constants';
 import type { QuestDTO } from '@/lib/contracts';
+import { fmtDay, fmtTime } from '@/lib/dates';
 import CategoryChip from './CategoryChip';
 import DifficultyStars from './DifficultyStars';
 import RewardBadge from './RewardBadge';
@@ -28,7 +29,7 @@ export default function QuestCard({ quest, selected, onClick }: { quest: QuestDT
         <CategoryChip staticChip label={m.label} emoji={m.emoji} color={m.color} />
         <DifficultyStars value={quest.difficulty} />
         <span className="text-xs text-muted">
-          {quest.durationMin} min · {quest.neighborhood}
+          {fmtDay(quest.date)} {fmtTime(quest.time)} · {quest.durationMin} min · {quest.neighborhood}
         </span>
       </div>
       <div className="flex items-center justify-between">

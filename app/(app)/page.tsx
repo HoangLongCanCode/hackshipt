@@ -7,6 +7,7 @@ import { Button, Sheet, SkeletonCard, type SheetSnap } from '@/components/ui';
 import { QuestSheet } from '@/components/quest';
 import QuestSidebar from '@/components/quest/QuestSidebar';
 import type { Category } from '@/lib/contracts';
+import { matchesDate, type DateFilter } from '@/lib/dates';
 import { useMe, useQuest, useQuests } from '@/lib/client/api';
 
 // MapLibre needs the browser: never render the canvas on the server.
@@ -17,10 +18,12 @@ export default function MapHome() {
   const [selected, setSelected] = useState<string | null>(null);
   const [snap, setSnap] = useState<SheetSnap>('full');
   const [sidebar, setSidebar] = useState(false);
+  const [dateFilter, setDateFilter] = useState<DateFilter>({ kind: 'any' });
   const [area, setArea] = useState<{ name: string; raw: string } | null>(null);
   const [membership, setMembership] = useState<Record<string, string>>({});
   const { data: me } = useMe();
-  const { data: quests, error, mutate } = useQuests(category ? { category } : undefined);
+  const { data: allQuests, error, mutate } = useQuests(category ? { category } : undefined);
+  const quests = useMemo(() => allQuests?.filter((q) => matchesDate(q, dateFilter)), [allQuests, dateFilter]);
   const { data: detail } = useQuest(selected);
 
   const inArea = useMemo(() => (area ? (quests ?? []).filter((q) => membership[q.id] === area.name) : quests), [quests, area, membership]);
@@ -73,6 +76,8 @@ export default function MapHome() {
         error={!!error}
         onRetry={() => mutate()}
         category={category}
+        dateFilter={dateFilter}
+        onDate={(f) => { setDateFilter(f); setSelected(null); }}
         onCategory={(c) => { setCategory(c); setSelected(null); }}
         area={area?.name ?? null}
         onClearArea={() => setArea(null)}
