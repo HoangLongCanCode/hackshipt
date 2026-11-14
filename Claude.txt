@@ -1,0 +1,2 @@
+This is a personal hackathon project. Nothing has to do with KSR.
+This is a hackathon, prioritize demos that worked. Don't dive too deep into anything. You can generate your own data or anything to build and test the concept first.
