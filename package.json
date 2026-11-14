@@ -1,0 +1,35 @@
+{
+  "name": "rpg-birmingham",
+  "version": "0.2.0",
+  "private": true,
+  "description": "RPG Birmingham: volunteer side quests on a Cyberpunk map of Birmingham, AL (hackathon demo)",
+  "scripts": {
+    "dev": "next dev -p 8001",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "smoke": "node legacy/tests/smoke.js",
+    "db:schema": "node scripts/apply-schema.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "lucide-react": "^1.73.0",
+    "maplibre-gl": "^4.7.1",
+    "next": "^14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "swr": "^2.5.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "pg": "^8.23.1",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^3.4.19",
+    "typescript": "5.6"
+  }
+}

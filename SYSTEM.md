@@ -1,6 +1,6 @@
 # RPG Birmingham — System Document (source of truth)
 
-> Built by Knuckle Sandwich Robotics Inc. (KSR) for a 4-hour hackathon.
+> Personal 4-hour hackathon project.
 > **Every agent reads this file in full before touching code.** If a phase prompt and this file disagree, this file wins; report the conflict in your handoff instead of silently diverging.
 
 ---
@@ -10,7 +10,8 @@
 **Product:** a city-as-game web app for Birmingham, Alabama. Local nonprofits post *side quests* (volunteer tasks). Adventurers pick one on a 3D map, go do it, get verified, earn **credits + XP**, then spend credits at sponsor businesses or donate them to causes. The point is connection: group quests and "adventurers like you" matching.
 
 **Hackathon constraints (these drive every decision):**
-- 4 hours wall-clock, several AI agents working in parallel, humans merging.
+- 4 hours wall-clock, a few AI agents working in parallel, humans merging. Each agent owns a *whole phase* and codes fast; don't dive deep into anything.
+- **Generate your own data** (procedural city, seeded content, fake adventurers) to build and test the concept; no real data pipelines needed.
 - **Demo beats completeness.** Everything on the demo path (§14) must work flawlessly; everything else is cut or stubbed.
 - No paid services, no API keys required. Must run with `npm run dev` on a laptop.
 - Prefer boring, fast tools. No new dependencies beyond §3 without writing it in your handoff.
@@ -22,7 +23,7 @@
 
 | Area | IN (must) | STRETCH | CUT |
 |---|---|---|---|
-| 3D map | Birmingham 3D buildings, quest markers, fly-to, select | RPG skin, district fog-of-war, user location | Custom 3D models |
+| 3D map | three.js Birmingham city (3D buildings), quest markers, camera fly-to, select | RPG skin, district fog-of-war, user location | Real GIS tile pipeline |
 | Auth | Email-only demo login, cookie session | — | Passwords, OAuth |
 | Quests | Browse/filter, accept, check-in, complete by code, abandon | Chains w/ bonus, group quests (capacity) | Recurring quests, scheduling |
 | Credits | Append-only ledger, balance, earn | Daily cap | Cash value, transfers |
@@ -40,8 +41,8 @@
 |---|---|---|
 | Framework | **Next.js 14 (App Router) + TypeScript strict** | One app: UI + API route handlers |
 | Styling | **Tailwind CSS 3** + CSS variables (tokens in §9) | `lucide-react` for icons |
-| Map | **maplibre-gl ^4** | Client-only (`dynamic(..., {ssr:false})`) |
-| Map data | **OpenFreeMap** style `https://tiles.openfreemap.org/styles/liberty` (OSM vector tiles, includes 3D buildings, no key) | Fallback: add our own `fill-extrusion` layer on source `openmaptiles`, source-layer `building` |
+| 3D map | **three.js** (`three` ^0.160, `@types/three`; plain three.js inside a client component, `dynamic(..., {ssr:false})`). Use `OrbitControls` from `three/examples/jsm`. If the existing map code already uses `@react-three/fiber`, keep that instead; the props contract in §8 is what matters | The team already has a three.js Birmingham render; Phase 4 adapts it to §8 |
+| Map data | **Own generated data**: `lib/map/cityData.ts` builds a stylized Birmingham from `DISTRICTS` (procedural blocks and buildings, seeded RNG) in local-meter coordinates projected from lat/lng. Optional stretch: a pre-baked `public/data/buildings.json` of real OSM footprints | No network needed at runtime |
 | DB | **SQLite via Prisma ^5.22** (`file:./dev.db`) | Schema in §5 is frozen after Phase 1 |
 | Validation | **zod** | One schema per request body, in `lib/contracts.ts` |
 | Auth | Signed cookie `ksr_session` via **jose** (HS256), 7-day, email-only login | No passwords |
@@ -55,7 +56,6 @@ DATABASE_URL="file:./dev.db"
 SESSION_SECRET="dev-only-change-me-32-chars-minimum!!"
 DEMO_MODE="true"                 # check-in ignores GPS distance; no daily cap
 NEXT_PUBLIC_USE_MOCKS="1"        # 1 = client uses lib/mock/*, 0 = real API
-NEXT_PUBLIC_MAP_STYLE="https://tiles.openfreemap.org/styles/liberty"
 ```
 
 ---
@@ -71,33 +71,34 @@ Agents may **only create/edit files in their owned paths** (§13 lists owners pe
 │  └─ prompts/…                      (phase prompts)
 ├─ prisma/
 │  ├─ schema.prisma                  FROZEN after Phase 1
-│  └─ seed.ts                        Phase 2D
+│  └─ seed.ts                        Phase 2
 ├─ app/
-│  ├─ layout.tsx, globals.css        Phase 1 (shell) → Phase 3C (theme)
+│  ├─ layout.tsx, globals.css        Phase 1 (shell) → Phase 6 (theme)
 │  ├─ (app)/                         authenticated shell group
-│  │  ├─ page.tsx                    MAP HOME (composed by 2C, uses 2A's <QuestMap/>)
+│  │  ├─ page.tsx                    MAP HOME (Phase 3, uses Phase 4's <QuestMap/>)
 │  │  ├─ quests/page.tsx             list view
 │  │  ├─ quest/[id]/page.tsx         quest detail
 │  │  ├─ profile/page.tsx
 │  │  ├─ store/page.tsx
 │  │  ├─ donate/page.tsx
 │  │  ├─ people/page.tsx             "Adventurers like you"
-│  │  └─ giver/page.tsx              (Phase 3B)
+│  │  └─ giver/page.tsx              (Phase 5)
 │  ├─ login/page.tsx
-│  ├─ dev/map/page.tsx               standalone map playground (2A)
-│  └─ api/**/route.ts                2B (3B adds matches/chains/giver)
+│  ├─ dev/map/page.tsx               standalone map playground (Phase 4)
+│  └─ api/**/route.ts                Phase 2 (Phase 5 adds matches/chains/giver)
 ├─ components/
-│  ├─ map/                           2A (3C restyles)
-│  ├─ shell/, ui/, quest/, profile/, store/   2C
-│  └─ social/, rpg/                  3B / 3C
+│  ├─ map/                           Phase 4 (three.js; Phase 6 restyles)
+│  ├─ shell/, ui/, quest/, profile/, store/   Phase 3
+│  └─ social/, rpg/                  Phase 5 / Phase 6
 ├─ lib/
 │  ├─ contracts.ts                   Phase 1: all DTO types + zod schemas (FROZEN)
 │  ├─ constants.ts                   Phase 1: categories, classes, colors, districts, Birmingham coords
-│  ├─ domain/                        stubs in Phase 1, implemented by 2D (pure functions, unit-tested)
-│  ├─ server/                        2B (db.ts, session.ts, http.ts written in Phase 1)
+│  ├─ domain/                        stubs in Phase 1, implemented in Phase 2 (pure functions, unit-tested)
+│  ├─ map/                           Phase 4 (cityData, projection, theme)
+│  ├─ server/                        Phase 2 (db.ts, session.ts, http.ts written in Phase 1)
 │  ├─ client/api.ts                  Phase 1 (mock-aware fetchers + SWR hooks)
 │  └─ mock/                          Phase 1 (typed fixtures matching contracts)
-├─ tests/                            2D (unit), 3A (smoke)
+├─ tests/                            Phase 2 (unit), Phase 5 (smoke)
 ├─ .env.example, package.json, tsconfig.json, tailwind.config.ts
 ```
 
@@ -255,7 +256,7 @@ model Redemption {
   offerId   String
   user      User     @relation(fields: [userId], references: [id])
   offer     Offer    @relation(fields: [offerId], references: [id])
-  code      String   // e.g. "KSR-7F3K9"
+  code      String   // e.g. "RPGB-7F3K9"
   createdAt DateTime @default(now())
 }
 
@@ -311,7 +312,7 @@ model UserBadge {
 - **Quest lifecycle per user:** `accept` (creates Participation ACCEPTED; fails if quest CLOSED, already active, or at capacity) → `checkin` (within 250 m of quest lat/lng, **skipped when `DEMO_MODE=true`**) → `complete` (must be CHECKED_IN and `code === quest.verifyCode`) → `abandon` (any time before complete).
 - **On complete** (single `prisma.$transaction`): Participation→COMPLETED; LedgerEntry EARN `+rewardCredits`; `user.credits += rewardCredits`; `user.xp += rewardXp`; recompute class; award badges; if the quest is the last uncompleted step of a chain for this user → LedgerEntry BONUS `+chain.bonusCredits`.
 - **Daily cap:** max 200 credits EARN from quests per rolling 24 h; disabled when `DEMO_MODE=true`.
-- **Store:** `redeem` requires `credits >= cost` and `stock > 0`; creates Redemption with code `KSR-` + 5 uppercase alphanumerics; LedgerEntry SPEND `-cost`; decrement stock.
+- **Store:** `redeem` requires `credits >= cost` and `stock > 0`; creates Redemption with code `RPGB-` + 5 uppercase alphanumerics; LedgerEntry SPEND `-cost`; decrement stock.
 - **Donate:** `donate` requires `credits >= amount > 0`; Donation row; `cause.raisedCredits += amount`; LedgerEntry DONATE `-amount`.
 - **Never** let credits go negative; all balance changes happen in a `$transaction` that also writes the ledger.
 - **Badges (slug → rule):** `first-steps` 1 completed · `regular` 5 completed · `explorer` completed in 3 distinct neighborhoods · `patron` ≥1 donation · `team-player` completed a quest with capacity > 1 · `chain-breaker` completed a full chain.
@@ -342,10 +343,10 @@ All routes are Next.js route handlers under `app/api`. **Envelope:** success `{ 
 | `GET /api/causes` | — | `CauseDTO[]` |
 | `POST /api/donate` | `{causeId, amount}` | `{balance, cause: CauseDTO}` |
 | `GET /api/ledger` | — | `LedgerEntryDTO[]` (newest first, max 50) |
-| `GET /api/matches` | — | `MatchDTO[]` *(3B)* |
-| `GET /api/chains` | — | `ChainDTO[]` with my progress *(3B)* |
-| `POST /api/giver/quests` | `NewQuestInput` | `QuestDetailDTO` incl. `verifyCode` *(3B)* |
-| `GET /api/leaderboard` | `?scope=neighborhood` | `LeaderboardRowDTO[]` *(3B, stretch)* |
+| `GET /api/matches` | — | `MatchDTO[]` *(Phase 5)* |
+| `GET /api/chains` | — | `ChainDTO[]` with my progress *(Phase 5)* |
+| `POST /api/giver/quests` | `NewQuestInput` | `QuestDetailDTO` incl. `verifyCode` *(Phase 5)* |
+| `GET /api/leaderboard` | `?scope=neighborhood` | `LeaderboardRowDTO[]` *(Phase 5, stretch)* |
 
 ### DTOs (live in `lib/contracts.ts`; exact shapes)
 
@@ -396,7 +397,9 @@ export interface LeaderboardRowDTO { rank: number; displayName: string; avatarEm
 
 ## 8. Map specification
 
-- **Component contract (2A implements, everyone else consumes):**
+The 3D map is a **three.js scene** (not MapLibre). The team already has a three.js Birmingham render; Phase 4 adapts it to the contract below rather than starting over. If it isn't in the repo yet, build the generated-city version described here.
+
+- **Component contract (Phase 4 implements, everyone else consumes):**
 ```ts
 // components/map/QuestMap.tsx  — default export, client component
 export interface QuestMapProps {
@@ -409,12 +412,14 @@ export interface QuestMapProps {
   className?: string;
 }
 ```
-- **Initial camera:** center `[-86.8025, 33.5186]` (lng, lat), zoom `14.3`, pitch `60`, bearing `-25`; `maxBounds` roughly Birmingham metro `[[-87.0, 33.38],[-86.65, 33.68]]`. Selecting a quest calls `flyTo` (zoom ≥ 16.2, pitch 65).
-- **3D buildings:** use the style's building layer; verify layer ids at runtime from `map.getStyle()` and fall back to a custom `fill-extrusion` layer if absent (source `openmaptiles`, source-layer `building`, height from `render_height`).
-- **Quest markers:** one GeoJSON source `quests`; circle + emoji symbol layer colored by category (`CATEGORY_META` in `lib/constants.ts`); selected quest gets a pulsing halo (DOM marker or animated circle). Cluster at zoom < 13 only if trivial; otherwise skip.
-- **Fog-of-war (stretch):** each `DISTRICTS` entry is a circle polygon (use a tiny helper, no turf dependency required); unrevealed districts get a translucent dark overlay + "???" label; revealed ones are clear.
-- **Performance:** never re-create the map on prop change; update sources with `setData`. Must hold 60 fps on a laptop with ~40 markers.
-- **Dev playground:** `/dev/map` renders `QuestMap` with `lib/mock` data and a selection readout; this is how 2A tests in isolation.
+- **Coordinates:** `lib/map/projection.ts` exports `project(lat, lng) → {x, z}` in meters (equirectangular around `BIRMINGHAM.center`; x east, z south, y up) and its inverse. Everything in the scene is in meters; 1 unit = 1 m.
+- **City data:** `lib/map/cityData.ts` returns buildings (`{x, z, w, d, h, district}`) generated deterministically (seeded RNG) per `DISTRICTS` (Downtown tall and dense, Avondale/Woodlawn low and sparse, a few landmark boxes such as Vulcan Park statue, Railroad Park green strip). Render with `InstancedMesh` (one per height class or a single instanced box with per-instance color/scale). Optional stretch: load a pre-baked `public/data/buildings.json` of real footprints.
+- **Camera:** perspective, orbit-style (`OrbitControls`, damping on, polar angle clamped so you can't go under the ground, distance clamped ~150–3500 m), start looking at the center from ~1400 m, ~55° tilt, −25° bearing; pan limited to the city bounds. Selecting a quest tweens (ease-in-out, ~1.2 s) the controls target to the quest and the camera closer (~280 m); deselect eases back out.
+- **Quest markers:** a 3D pin/beacon per quest (cone or cylinder + emoji sprite or canvas-texture billboard), colored by `CATEGORY_META`; raycast clicking → `onSelect(id)`, click empty → `onSelect(null)`; selected gets a pulsing ring + light beam. Markers face the camera; size constant-ish on screen.
+- **Fog-of-war (stretch):** unrevealed districts get a dark translucent ground disc (radius from `DISTRICTS`) with a floating "???"; revealed ones fade out (animate opacity).
+- **Sponsors (optional):** small shop-shaped markers when `sponsors` is passed.
+- **Performance:** create the renderer/scene once; never rebuild on prop change (diff markers by quest id); dispose geometry/materials/renderer and cancel `requestAnimationFrame` on unmount (React strict-mode double mount must not leave two canvases); `setPixelRatio(min(devicePixelRatio, 2))`; `ResizeObserver` on the container. Hold 60 fps with ~40 markers and ~2–3k instanced buildings.
+- **Dev playground:** `/dev/map` renders `QuestMap` with `lib/mock` data and a selection readout; this is how Phase 4 tests in isolation.
 
 ---
 
@@ -428,11 +433,11 @@ export interface QuestMapProps {
 --gold:#ffc857 (credits) --xp:#7bdcb5 --accent:#8b7bff --danger:#ff6b81
 category colors (CATEGORY_META): cleanup #f59e0b · food #f97316 · education #60a5fa · seniors #34d399 · animals #f472b6 · arts #c084fc · environment #4ade80 · community #fbbf24
 ```
-- **Type:** system UI font stack; headings may use a single Google font if added in Phase 3C (optional).
-- **Brand:** apply KSR branding guidelines. They are not in the repo; leave `BRAND_TODO` comments at the logo/wordmark/colour spots and list them in the handoff so a human can drop the assets in. Product wordmark for now: "RPG Birmingham".
-- **Components (2C):** `Button, Card, Pill, Sheet, ProgressBar, Avatar, Modal, Toast, EmptyState, Skeleton` in `components/ui`; domain components `QuestCard, QuestSheet, CategoryChip, RewardBadge, LevelRing, CreditPill`.
+- **Type:** system UI font stack; headings may use a single Google font in Phase 6 (optional).
+- **Brand:** this is a personal project with no external brand guidelines. Wordmark: "RPG Birmingham". Don't reference any company or organization branding.
+- **Components (Phase 3):** `Button, Card, Pill, Sheet, ProgressBar, Avatar, Modal, Toast, EmptyState, Skeleton` in `components/ui`; domain components `QuestCard, QuestSheet, CategoryChip, RewardBadge, LevelRing, CreditPill`.
 - **States:** every data view needs loading (skeleton), empty, and error states. Every mutation shows a toast.
-- **Juice (Phase 3C):** XP/credit count-up, level-up modal with confetti-ish CSS animation, badge pop-in.
+- **Juice (Phase 6):** XP/credit count-up, level-up modal with confetti-ish CSS animation, badge pop-in.
 
 ---
 
@@ -440,15 +445,15 @@ category colors (CATEGORY_META): cleanup #f59e0b · food #f97316 · education #6
 
 `lib/client/api.ts` exports typed fetchers + SWR hooks (`useMe`, `useQuests(filters)`, `useQuest(id)`, `useStore`, `useCauses`, `useLedger`, `useMatches`, `useChains` plus action functions `login, logout, acceptQuest, checkIn, completeQuest, abandonQuest, redeem, donate, updateProfile`). Each function branches on `process.env.NEXT_PUBLIC_USE_MOCKS === '1'` and serves from `lib/mock/*` (in-memory state so actions visibly work: accepting a quest changes `myStatus`, completing it bumps credits/xp). With `0` it calls the real API and unwraps the envelope, throwing `ApiError {code, message}`.
 
-- 2A and 2C build **only** against mock mode.
-- 2B builds real routes and curl-tests them independently.
-- Phase 3A flips `NEXT_PUBLIC_USE_MOCKS=0` and fixes drift. **Any DTO change after Phase 1 requires a lead (human) OK**, and must update `contracts.ts`, `lib/mock`, `lib/client/api.ts` and the route in one commit.
+- Phase 3 (UI) and Phase 4 (map) build **only** against mock mode.
+- Phase 2 builds real routes and curl-tests them independently.
+- Phase 5 flips `NEXT_PUBLIC_USE_MOCKS=0` and fixes drift. **Any DTO change after Phase 1 requires a lead (human) OK**, and must update `contracts.ts`, `lib/mock`, `lib/client/api.ts` and the route in one commit.
 
 ---
 
-## 11. Seed data (2D) — Birmingham, AL
+## 11. Seed data (Phase 2) — Birmingham, AL
 
-Coordinates are approximate (±300 m); eyeball the marker placement in `/dev/map` and nudge if one lands in the wrong place.
+All data is generated/invented for the demo. Coordinates are approximate (±300 m); eyeball the marker placement in `/dev/map` and nudge if one lands in the wrong place.
 
 **Neighborhoods / districts** (center lat,lng · radius m): Downtown 33.5186,-86.8104 · 900 | Five Points South 33.5010,-86.7950 · 700 | Avondale 33.5222,-86.7692 · 800 | Woodlawn 33.5504,-86.7634 · 800 | Southside 33.5050,-86.8000 · 600 | Lakeview 33.5130,-86.7900 · 600 *(Sloss/Lakeview)* | Highland Park 33.5043,-86.7840 · 700 | Ensley 33.5120,-86.8800 · 900.
 
@@ -481,27 +486,24 @@ Coordinates are approximate (±300 m); eyeball the marker placement in `/dev/map
 
 ## 13. Multi-agent protocol
 
-### Timeline (240 min)
-| Clock | Phase | Agents (parallel) | Output |
+### Timeline (240 min) — one agent per phase
+| Clock | Phase | Agent(s) | Output |
 |---|---|---|---|
-| 0:00–0:30 | **1 Foundation** | 1 agent (serial) | Scaffold, schema, contracts, stubs, mocks |
-| 0:30–1:45 | **2 Build** | 2A Map · 2B API · 2C UI · 2D Domain+Seed | Four disjoint slices |
-| 1:45–2:00 | *Checkpoint* | humans | Merge handoffs, `typecheck`, `db:reset`, commit |
-| 2:00–3:10 | **3 Integrate + Extend** | 3A Integration · 3B Social/Giver · 3C RPG polish | Real API wired, extras, polish |
-| 3:10–3:20 | *Checkpoint* | humans | Run demo script once end to end |
-| 3:20–3:50 | **4 Harden + Pitch** | 4A QA/fixes · 4B Demo/pitch/README | Demo-ready build, script, slides outline |
-| 3:50–4:00 | Buffer | everyone | Rehearse; freeze code at 3:50 |
+| 0:00–0:25 | **1 Foundation** | 1 agent (serial) | Scaffold, schema, contracts, stubs, mocks |
+| 0:25–1:50 | **2 Backend** · **3 Frontend** · **4 3D Map** | 3 agents in parallel | Three disjoint slices |
+| 1:50–2:00 | *Checkpoint* | humans | Merge handoffs, `typecheck`, `db:reset`, commit |
+| 2:00–3:05 | **5 Integrate + Extend** | 1 agent | Real API wired; social, chains, giver |
+| 3:05–3:15 | *Checkpoint* | humans | Run demo script once end to end |
+| 3:15–3:50 | **6 Polish, QA + Pitch** | 1 agent | Juice, hardened demo, README + pitch |
+| 3:50–4:00 | Buffer | everyone | Rehearse; code freeze at 3:50 |
 
 ### Ownership by phase
 - **P1:** everything (scaffold).
-- **2A:** `components/map/**`, `lib/map/**`, `app/dev/map/**`.
-- **2B:** `app/api/**`, `lib/server/**` (except the three files P1 wrote may be *extended*, not rewritten).
-- **2C:** `app/(app)/**`, `app/login/**`, `components/{ui,shell,quest,profile,store}/**`, `lib/client/**` (UI-side hooks only; contract frozen).
-- **2D:** `lib/domain/**`, `prisma/seed.ts`, `tests/domain/**`, `docs/DEMO.md`.
-- **3A:** wiring fixes anywhere (smallest edits), `tests/smoke.ts`.
-- **3B:** `app/api/{matches,chains,giver,leaderboard}/**`, `app/(app)/{people,giver}/**`, `components/social/**`.
-- **3C:** `app/globals.css`, `tailwind.config.ts`, `components/rpg/**`, visual-only edits in `components/map/**` and `components/ui/**`.
-- **4A:** any file, bug fixes only. **4B:** `README.md`, `docs/PITCH.md`, `docs/DEMO.md`.
+- **P2 Backend:** `app/api/**`, `lib/server/**` (the three files P1 wrote may be *extended*, not rewritten), `lib/domain/**`, `prisma/seed.ts`, `tests/domain/**`, `docs/DEMO.md`.
+- **P3 Frontend:** `app/(app)/**`, `app/login/**`, `components/{ui,shell,quest,profile,store}/**`, `lib/client/**` (hooks only; contract frozen), additions to `app/globals.css` below a `/* P3 */` marker.
+- **P4 3D Map:** `components/map/**`, `lib/map/**`, `app/dev/map/**`, plus the `three` dependency.
+- **P5:** anything needed for integration (smallest edits to others' files) plus `app/api/{matches,chains,giver,leaderboard}/**`, `app/(app)/{people,giver}/**`, `components/social/**`, `tests/smoke.ts`.
+- **P6:** `app/globals.css`, `tailwind.config.ts`, `components/rpg/**`, visual edits anywhere, bug fixes anywhere, `README.md`, `docs/PITCH.md`, `docs/DEMO.md`.
 
 ### Conflict rules
 1. Disjoint paths = no merge pain, so all agents share the same working folder. No branches needed.
@@ -519,17 +521,16 @@ Contracts changed: none | <list + why>
 Deviations from SYSTEM.md: none | <list>
 Files touched outside ownership: none | <list>
 Known issues / TODO for next phase: <bullets>
-BRAND_TODOs: none | <list>
 ```
 
 ### Prompt placeholders
-Each phase prompt begins with a `## Context from previous phases` block containing placeholders like `{{PHASE_1_HANDOFF}}`. Humans replace them with the actual handoff text before launching. If a placeholder is still literal text, treat that phase as "not yet merged" and rely on SYSTEM.md only.
+Each phase prompt begins with a `## Context from previous phases` block containing placeholders like `{{PHASE_1_HANDOFF}}`. Humans replace them with the actual handoff text before launching. If a placeholder is still literal text, treat that phase as "not yet merged" and rely on SYSTEM.md only. Phase 4 also has `{{EXISTING_THREEJS_MAP}}` for the team's current three.js code or path.
 
 ---
 
 ## 14. Demo script = acceptance criteria (3 minutes)
 
-1. **Open** the app → login as `demo@rpgbirmingham.app` → 3D Birmingham map flies in, quest markers glowing; HUD shows level 1, 40 credits.
+1. **Open** the app → login as `demo@rpgbirmingham.app` → 3D Birmingham (three.js) map eases in, quest beacons glowing; HUD shows level 1, 40 credits.
 2. **Filter** to "Animals," tap the *Dog Day at the Shelter* marker → camera flies in, sheet shows reward, party (NPC teammates), spots left.
 3. **Accept** → **Check in** (demo mode) → **Complete** with code → toast, credit/XP count-up, badge *First Steps*, class changes from Wanderer → Keeper, district fog lifts.
 4. **People** tab → "Adventurers like you" shows 3+ matches with shared-interest reasons.

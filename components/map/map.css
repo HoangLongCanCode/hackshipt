@@ -1,0 +1,34 @@
+/* Map-only styling, warm theme (front-end kit palette): small floating quest pins, landmark, hover label. */
+.rpgb-maphint { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); color: #8c7260; font-size: 13px; pointer-events: none; }
+.rpgb-area { position: absolute; z-index: 5; right: 12px; top: 12px; background: rgba(255,250,238,.9); color: #4a3328; border: 1.5px solid rgba(217,168,119,.6); border-radius: 14px; padding: 6px 12px; font-weight: 800; font-size: 14px; pointer-events: none; box-shadow: 0 8px 24px rgba(94,58,30,.14); }
+.rpgb-area span { display: block; font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #8c7260; font-weight: 700; }
+
+@keyframes rpgb-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes rpgb-pulse { 0% { transform: scale(.5); opacity: .9; } 100% { transform: scale(2); opacity: 0; } }
+
+.landmark { width: 0; height: 0; cursor: pointer; }
+.landmark .badge { position: absolute; left: -34px; bottom: 80px; width: 68px; height: 28px; background: #fffdf6; border: 1.5px solid #d9a877; border-radius: 8px; padding: 3px 7px; box-sizing: border-box; box-shadow: 0 4px 12px rgba(94,58,30,.25); animation: rpgb-bob 2s ease-in-out infinite; display: flex; align-items: center; justify-content: center; }
+.landmark .badge img { max-width: 100%; max-height: 100%; display: block; }
+.landmark .stem { position: absolute; left: -1px; bottom: 0; width: 2px; height: 80px; background: linear-gradient(to top, rgba(79,154,59,0), #4f9a3b); }
+.landmark .ring { position: absolute; left: -12px; bottom: -5px; width: 24px; height: 10px; border: 2px solid #4f9a3b; border-radius: 50%; animation: rpgb-pulse 1.8s ease-out infinite; }
+
+/* quest pins: small hex on a short stem so the map stays readable */
+.qpin { width: 0; height: 0; cursor: pointer; --h: 26px; --c: #f07c5a; }
+.qpin:hover, .qpin.sel { z-index: 5; }
+.qpin .fl { position: absolute; left: -12px; bottom: var(--h); width: 24px; height: 27px; animation: rpgb-bob 2.4s ease-in-out infinite; filter: drop-shadow(0 2px 3px rgba(74,51,40,.35)); }
+.qpin .stem { position: absolute; left: -.5px; bottom: 0; width: 1.5px; height: var(--h); background: linear-gradient(to top, transparent, var(--c)); }
+.qpin .ring { position: absolute; left: -8px; bottom: -3px; width: 16px; height: 7px; border: 1.5px solid var(--c); border-radius: 50%; animation: rpgb-pulse 2s ease-out infinite; }
+.qpin .hex { transition: transform .15s; }
+.qpin:hover .hex, .qpin.sel .hex { transform: scale(1.35); }
+.qpin .hex, .qpin .hex i { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); display: grid; place-items: center; }
+.qpin .hex { width: 24px; height: 27px; background: var(--c); }
+.qpin .hex i { width: 20px; height: 23px; background: #fffdf6; font-style: normal; font-size: 11px; }
+.qpin .bang { position: absolute; top: -6px; right: -5px; width: 12px; height: 12px; border-radius: 50%; background: #f2b63d; color: #4a3328; border: 1px solid #fffdf6; font-weight: 900; font-size: 8px; line-height: 10px; text-align: center; }
+.qpin .lbl { display: none; position: absolute; left: 50%; bottom: calc(var(--h) + 34px); transform: translateX(-50%); background: #fffdf6; color: #4a3328; border: 1.5px solid #d9a877; font-weight: 700; font-size: 12px; padding: 4px 9px; border-radius: 99px; white-space: nowrap; max-width: 220px; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 6px 16px rgba(94,58,30,.25); pointer-events: none; }
+.qpin:hover .lbl, .qpin.sel .lbl { display: block; }
+.qpin.sel .hex { outline: none; }
+.qpin.done .fl { filter: grayscale(.9) opacity(.6); animation: none; }
+.qpin.done .bang { background: #6bb653; color: #fff; }
+.qpin.done .ring { animation: none; opacity: .3; }
+.qpin.mine .bang { background: #5a97cf; color: #fff; }
+.qpin.full .bang { background: #8c7260; color: #fff; }

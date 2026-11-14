@@ -1,1 +1,8 @@
 Claude.txt
+.vercel
+.env*
+node_modules
+public/assets/inspo
+supabase/.temp
+.next
+next-env.d.ts

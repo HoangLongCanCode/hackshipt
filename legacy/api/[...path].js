@@ -1,0 +1,3 @@
+// Vercel serverless entry for single-segment routes: /api/login, /api/bootstrap, /api/redeem, ...
+// (Multi-segment quest actions live in api/quests/[id]/[action].js. Same handler is used by dev-server.js locally.)
+module.exports = require("../lib/http");
