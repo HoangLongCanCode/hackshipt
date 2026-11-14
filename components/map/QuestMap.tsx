@@ -30,10 +30,10 @@ export interface QuestMapProps {
 
 // Warm theme (values from components/ui/cozy.css)
 const T = {
-  bg: '#f6e0a0', // warm golden ground
-  roadCasing: '#c99a3c', roads: ['#fffaE0', '#fffae0', '#fff5cc', '#fcefb8', '#f8e8a8'],
-  bldLow: '#fbecc2', bldMid: '#efc366', bldHigh: '#df8d3d', bldLine: '#a8761f',
-  hood: '#9a6a1a', hoodHover: '#f07c5a', hoodSel: '#d8603f',
+  bg: '#eef3df', // pale avocado-white ground
+  roadCasing: '#b7c796', roads: ['#ffffff', '#ffffff', '#fbfdf4', '#f6f9ea', '#f1f5e1'],
+  bldLow: '#f8faef', bldMid: '#bfd391', bldHigh: '#86a24a', bldLine: '#8aa05a',
+  hood: '#7f9a4a', hoodHover: '#8fb23a', hoodSel: '#4e6b1f',
 };
 const BOUNDS = { west: -86.92, south: 33.43, east: -86.70, north: 33.62 };
 const SHIPT_HEIGHT = 78;
@@ -117,7 +117,7 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
             'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0,
             'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'h'], 5, T.bldLow, 30, T.bldMid, 90, T.bldHigh] as never,
             'fill-extrusion-opacity': 0.92, 'fill-extrusion-vertical-gradient': true } });
-          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.6, 'line-opacity': 0.85 } });
+          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.4, 'line-opacity': 0.55 } });
           // hover
           m.addLayer({ id: 'hood-fill', type: 'fill', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'fill-color': T.hoodHover, 'fill-opacity': 0.14 } });
           m.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'line-color': T.hoodHover, 'line-width': 2.2, 'line-opacity': 0.9 } });
@@ -126,8 +126,8 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
           m.addLayer({ id: 'sel-line', type: 'line', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'line-color': T.hoodSel, 'line-width': 3.5, 'line-opacity': 1 } });
 
           m.addSource('shipt', { type: 'geojson', data: { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [sp] } } });
-          m.addLayer({ id: 'shipt-glow', type: 'line', source: 'shipt', paint: { 'line-color': '#6bb653', 'line-width': 14, 'line-blur': 8, 'line-opacity': 0.5 } });
-          m.addLayer({ id: 'shipt-bld', type: 'fill-extrusion', source: 'shipt', paint: { 'fill-extrusion-height': SHIPT_HEIGHT, 'fill-extrusion-base': 0, 'fill-extrusion-color': '#4f9a3b', 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true } });
+          m.addLayer({ id: 'shipt-glow', type: 'line', source: 'shipt', paint: { 'line-color': '#16b364', 'line-width': 14, 'line-blur': 8, 'line-opacity': 0.5 } });
+          m.addLayer({ id: 'shipt-bld', type: 'fill-extrusion', source: 'shipt', paint: { 'fill-extrusion-height': SHIPT_HEIGHT, 'fill-extrusion-base': 0, 'fill-extrusion-color': '#16b364', 'fill-extrusion-opacity': 0.95, 'fill-extrusion-vertical-gradient': true } });
           m.addLayer({ id: 'shipt-line', type: 'line', source: 'shipt', paint: { 'line-color': '#fffdf6', 'line-width': 2 } });
           const el = document.createElement('div');
           el.className = 'landmark';
