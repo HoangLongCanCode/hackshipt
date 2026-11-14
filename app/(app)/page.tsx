@@ -15,7 +15,7 @@ const QuestMap = dynamic(() => import('@/components/map/QuestMap'), { ssr: false
 export default function MapHome() {
   const [category, setCategory] = useState<Category | undefined>();
   const [selected, setSelected] = useState<string | null>(null);
-  const [snap, setSnap] = useState<SheetSnap>('half');
+  const [snap, setSnap] = useState<SheetSnap>('full');
   const [sidebar, setSidebar] = useState(false);
   const [area, setArea] = useState<{ name: string; raw: string } | null>(null);
   const [membership, setMembership] = useState<Record<string, string>>({});
@@ -27,7 +27,7 @@ export default function MapHome() {
 
   const select = useCallback((id: string | null) => {
     setSelected(id);
-    if (id) { setSnap('half'); setSidebar(false); }
+    if (id) { setSnap('full'); setSidebar(false); }
   }, []);
 
   return (
@@ -80,6 +80,9 @@ export default function MapHome() {
         onSelect={select}
       />
 
+      {selected && (
+        <div className="fixed inset-0 z-[25] bg-[rgba(74,51,40,.25)]" onClick={() => select(null)} aria-hidden data-testid="sheet-backdrop" />
+      )}
       {selected && (
         <Sheet bottomOffset={88} snap={snap} onSnapChange={setSnap} peekHeight={140}>
           <div className="px-4 pt-1">

@@ -30,11 +30,10 @@ export interface QuestMapProps {
 
 // Warm theme (values from components/ui/cozy.css)
 const T = {
-  bg: '#e9efdc', // soft sage ground
-  tints: ['#cfe4c1', '#f4e8c6', '#c4e0d8', '#e2e9bd'], // neighborhood washes so it reads as a patchwork, not one flat colour
-  roadCasing: '#cdb98f', roads: ['#fffdf6', '#fffdf6', '#fbf4e2', '#f5ecd5', '#efe5cc'],
-  bldLow: '#f6ecd6', bldMid: '#a9cdc6', bldHigh: '#ec8f6e', bldLine: '#a68a63',
-  hood: '#5f8f8b', hoodHover: '#f07c5a', hoodSel: '#d8603f',
+  bg: '#f0cf6e', // warm golden ground
+  roadCasing: '#b98a2c', roads: ['#fff4c9', '#fff4c9', '#fdeeb5', '#f9e6a0', '#f4de8f'],
+  bldLow: '#f8e2a0', bldMid: '#eab34e', bldHigh: '#d77a2a', bldLine: '#a8761f',
+  hood: '#9a6a1a', hoodHover: '#f07c5a', hoodSel: '#d8603f',
 };
 const BOUNDS = { west: -86.92, south: 33.43, east: -86.70, north: 33.62 };
 const SHIPT_HEIGHT = 78;
@@ -64,8 +63,8 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
   const markers = useRef(new Map<string, Marker>());
   const areasRef = useRef<Area[]>([]);
   const membership = useRef<Record<string, string>>({});
-  const cb = useRef({ onSelect, onAreaSelect, onQuestAreas, area });
-  cb.current = { onSelect, onAreaSelect, onQuestAreas, area };
+  const cb = useRef({ onSelect, onAreaSelect, onQuestAreas, area, selectedId });
+  cb.current = { onSelect, onAreaSelect, onQuestAreas, area, selectedId };
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [hover, setHover] = useState('');
@@ -109,8 +108,6 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
           m.addSource('bld', { type: 'geojson', data: bldGJ as never });
           m.addSource('hoods', { type: 'geojson', data: hoods });
           const byClass = (...v: (number | string)[]) => ['match', ['get', 'k'], 0, v[0], 1, v[1], 2, v[2], 3, v[3], v[4]] as never;
-          m.addLayer({ id: 'hood-tint', type: 'fill', source: 'hoods', paint: {
-            'fill-color': ['match', ['%', ['to-number', ['get', 'NUM'], 0], 4], 0, T.tints[0], 1, T.tints[1], 2, T.tints[2], T.tints[3]] as never, 'fill-opacity': 0.9 } });
           m.addLayer({ id: 'roads-glow', type: 'line', source: 'roads', layout: { 'line-cap': 'round', 'line-join': 'round' },
             paint: { 'line-color': T.roadCasing, 'line-opacity': 0.85, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, byClass(2.6, 2.1, 1.6, 1.2, 0.9), 17, byClass(9, 7.5, 6.2, 5, 3.6)] as never } });
           m.addLayer({ id: 'roads', type: 'line', source: 'roads', layout: { 'line-cap': 'round', 'line-join': 'round' },
@@ -120,7 +117,7 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
             'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0,
             'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'h'], 5, T.bldLow, 30, T.bldMid, 90, T.bldHigh] as never,
             'fill-extrusion-opacity': 0.92, 'fill-extrusion-vertical-gradient': true } });
-          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.8, 'line-opacity': 0.85 } });
+          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.6, 'line-opacity': 0.85 } });
           // hover
           m.addLayer({ id: 'hood-fill', type: 'fill', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'fill-color': T.hoodHover, 'fill-opacity': 0.14 } });
           m.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'line-color': T.hoodHover, 'line-width': 2.2, 'line-opacity': 0.9 } });
@@ -162,6 +159,7 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
             setHover(a ? a.name : '');
           });
           m.on('click', (e) => {
+            if (cb.current.selectedId) { cb.current.onSelect?.(null); return; } // click outside the popup closes it
             const a = areaAt(e.lngLat.lng, e.lngLat.lat);
             if (!a) return;
             const cur = cb.current.area;

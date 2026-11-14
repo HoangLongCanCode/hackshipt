@@ -5,7 +5,8 @@ import { Button, Modal, Pill, useToast } from '@/components/ui';
 import { CATEGORY_META } from '@/lib/constants';
 import { ApiError } from '@/lib/contracts';
 import type { CompleteResultDTO, QuestDetailDTO } from '@/lib/contracts';
-import { abandonQuest, acceptQuest, checkIn, completeQuest } from '@/lib/client/api';
+import { abandonQuest, acceptQuest, checkIn, completeQuest, useMe } from '@/lib/client/api';
+import XpGain from './XpGain';
 import BuildingView from './BuildingView';
 import PartyVibes from '@/components/social/PartyVibes';
 import PartyStrip from '@/components/social/PartyStrip';
@@ -15,13 +16,15 @@ import DifficultyStars from './DifficultyStars';
 import RewardBadge from './RewardBadge';
 
 /** Quest detail + the accept -> check in -> complete flow. Renders inside the bottom sheet or /quest/[id]. */
-const navUrl = (q: { lat: number; lng: number }) => `https://www.google.com/maps/dir/?api=1&destination=${q.lat},${q.lng}&travelmode=driving`;
+const navUrl = (q: { lat: number; lng: number }) => `https://www.google.com/maps/dir/?api=1&destination=${q.lat},${q.lng}`;
 
 export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState('');
   const [result, setResult] = useState<CompleteResultDTO | null>(null);
+  const { data: meNow } = useMe();
+  const [before, setBefore] = useState<{ level: number; into: number; need: number } | null>(null);
   const m = CATEGORY_META[quest.category];
   const st = quest.myStatus;
 
@@ -42,6 +45,7 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
   // Demo mode ignores GPS (SYSTEM.md §6), so we send the quest's own coordinates.
   const doCheckIn = () => run(() => checkIn(quest.id, quest.lat, quest.lng), 'Checked in!');
   const doComplete = async () => {
+    if (meNow) setBefore({ level: meNow.level, into: meNow.xpIntoLevel, need: meNow.xpForNext });
     const r = await run(() => completeQuest(quest.id, code));
     if (r) {
       setResult(r);
@@ -140,8 +144,15 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
           <div className="space-y-3 text-center" data-testid="complete-modal">
             <div className="text-5xl">{result.me.avatarEmoji}</div>
             <RewardBadge credits={result.earned.credits} xp={result.earned.xp} chainBonus={result.earned.chainBonus} />
+            {before && (
+              <XpGain
+                fromLevel={before.level} fromInto={before.into} fromNeed={before.need}
+                toLevel={result.me.level} toInto={result.me.xpIntoLevel} toNeed={result.me.xpForNext}
+                gained={result.earned.xp}
+              />
+            )}
             <div className="text-sm text-muted">
-              Level {result.me.level} {result.me.avatarClass} · {result.me.credits} credits
+              {result.me.credits} credits now
             </div>
             {result.newBadges.map((b) => (
               <Pill key={b.slug} tone="gold">

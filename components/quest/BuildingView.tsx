@@ -8,12 +8,12 @@ type Where = Pick<QuestDTO, 'lat' | 'lng' | 'address' | 'neighborhood' | 'org'>;
 
 /** Google Maps deep link by coordinates (seeded addresses are fictional "(demo)" strings, so lat/lng is the reliable key). */
 export function googleMapsUrl(q: Pick<Where, 'lat' | 'lng'>) {
-  return `https://www.google.com/maps/search/?api=1&query=${q.lat},${q.lng}`;
+  return `https://www.google.com/maps?q=${q.lat},${q.lng}`;
 }
 
 /** Opens Google Street View at the spot (a plain link: no embed, no API key, nothing to break offline). */
 export function streetViewUrl(q: Pick<Where, 'lat' | 'lng'>) {
-  return `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${q.lat},${q.lng}`;
+  return `https://www.google.com/maps?q=&layer=c&cbll=${q.lat},${q.lng}`;
 }
 
 /**
