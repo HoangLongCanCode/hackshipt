@@ -1,0 +1,9 @@
+prototype_*.js
+*.md
+dev-server.js
+tests
+public/assets/inspo
+supabase
+.env*
+.vercel
+archive
