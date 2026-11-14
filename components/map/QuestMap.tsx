@@ -30,9 +30,11 @@ export interface QuestMapProps {
 
 // Warm theme (values from components/ui/cozy.css)
 const T = {
-  bg: '#f3e6cc', roads: ['#c9a874', '#cdb07e', '#d5ba8c', '#dcc59d', '#e2cfaa'], roadGlow: '#fff6e3',
-  bldLow: '#ecd7ae', bldMid: '#e3b98c', bldHigh: '#d98f6a', bldLine: '#b98d5e',
-  hood: '#d9a877', hoodHover: '#f07c5a', hoodSel: '#d8603f',
+  bg: '#e9efdc', // soft sage ground
+  tints: ['#cfe4c1', '#f4e8c6', '#c4e0d8', '#e2e9bd'], // neighborhood washes so it reads as a patchwork, not one flat colour
+  roadCasing: '#cdb98f', roads: ['#fffdf6', '#fffdf6', '#fbf4e2', '#f5ecd5', '#efe5cc'],
+  bldLow: '#f6ecd6', bldMid: '#a9cdc6', bldHigh: '#ec8f6e', bldLine: '#a68a63',
+  hood: '#5f8f8b', hoodHover: '#f07c5a', hoodSel: '#d8603f',
 };
 const BOUNDS = { west: -86.92, south: 33.43, east: -86.70, north: 33.62 };
 const SHIPT_HEIGHT = 78;
@@ -107,16 +109,18 @@ export default function QuestMap({ quests, selectedId, onSelect, area, onAreaSel
           m.addSource('bld', { type: 'geojson', data: bldGJ as never });
           m.addSource('hoods', { type: 'geojson', data: hoods });
           const byClass = (...v: (number | string)[]) => ['match', ['get', 'k'], 0, v[0], 1, v[1], 2, v[2], 3, v[3], v[4]] as never;
+          m.addLayer({ id: 'hood-tint', type: 'fill', source: 'hoods', paint: {
+            'fill-color': ['match', ['%', ['to-number', ['get', 'NUM'], 0], 4], 0, T.tints[0], 1, T.tints[1], 2, T.tints[2], T.tints[3]] as never, 'fill-opacity': 0.9 } });
           m.addLayer({ id: 'roads-glow', type: 'line', source: 'roads', layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': T.roadGlow, 'line-opacity': 0.8, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, byClass(3, 2.5, 2, 1.5, 1), 17, byClass(14, 12, 10, 8, 6)] as never } });
+            paint: { 'line-color': T.roadCasing, 'line-opacity': 0.85, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, byClass(2.6, 2.1, 1.6, 1.2, 0.9), 17, byClass(9, 7.5, 6.2, 5, 3.6)] as never } });
           m.addLayer({ id: 'roads', type: 'line', source: 'roads', layout: { 'line-cap': 'round', 'line-join': 'round' },
-            paint: { 'line-color': byClass(...T.roads), 'line-opacity': 0.9, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, byClass(1.0, 0.8, 0.6, 0.5, 0.4), 17, byClass(3.0, 2.5, 2.0, 1.6, 1.1)] as never } });
+            paint: { 'line-color': byClass(...T.roads), 'line-opacity': 1, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, byClass(1.5, 1.2, 0.9, 0.6, 0.45), 17, byClass(6, 5, 4, 3, 2)] as never } });
           m.addLayer({ id: 'bld-line', type: 'line', source: 'bld', paint: { 'line-color': T.bldLine, 'line-width': 0.5, 'line-opacity': 0.35 } });
           m.addLayer({ id: 'bld', type: 'fill-extrusion', source: 'bld', paint: {
             'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0,
             'fill-extrusion-color': ['interpolate', ['linear'], ['get', 'h'], 5, T.bldLow, 30, T.bldMid, 90, T.bldHigh] as never,
             'fill-extrusion-opacity': 0.92, 'fill-extrusion-vertical-gradient': true } });
-          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.2, 'line-opacity': 0.55, 'line-dasharray': [3, 2] } });
+          m.addLayer({ id: 'hood-base', type: 'line', source: 'hoods', paint: { 'line-color': T.hood, 'line-width': 1.8, 'line-opacity': 0.85 } });
           // hover
           m.addLayer({ id: 'hood-fill', type: 'fill', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'fill-color': T.hoodHover, 'fill-opacity': 0.14 } });
           m.addLayer({ id: 'hood-line', type: 'line', source: 'hoods', filter: ['==', 'NAME', ''], paint: { 'line-color': T.hoodHover, 'line-width': 2.2, 'line-opacity': 0.9 } });

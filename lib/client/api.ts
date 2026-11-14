@@ -218,7 +218,10 @@ export const login = (email: string, displayName?: string) =>
   act<MeDTO>(async () => {
     const { token } = await call<{ token: string }>('POST', 'login', { email, name: displayName });
     setToken(token);
-    return toMe(await boot(true));
+    const me = toMe(await boot(true));
+    // Overwrite the cached "signed out" error before navigating, or the app layout bounces back to /login.
+    await globalMutate('me', me, { revalidate: false });
+    return me;
   });
 
 export const logout = () =>
