@@ -90,3 +90,8 @@ RPG Birmingham: 3D Birmingham map + volunteer side quests from 4 orgs (Birmingha
 ### 2026-11-14 (Supabase: reuse existing project, option B)
 - User's Vercel->Supabase install failed ("already a member of an organization named Gambler"); chose to reuse an existing Supabase project instead (option B: run supabase/schema.sql in the SQL editor, add SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY as Vercel env vars, then redeploy).
 - Because the existing project may have other tables, all app tables are now prefixed `rpgb_` (supabase/schema.sql, lib/db.js, scripts/apply-schema.js). Memory backend/smoke test unaffected (passes). Not yet deployed with this change.
+
+### 2026-11-14 (GitHub -> Vercel)
+- Pushed to https://github.com/lnguyen258/shipt-hacks (main) and connected it to the Vercel project `rpg-birmingham` (team gambler7) via `vercel git connect`: pushes to main now auto-deploy to production (https://rpg-birmingham.vercel.app), other branches get previews.
+- public/assets/inspo (game screenshot references) is git-ignored so it isn't published.
+- Still pending: database. Without SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel env vars the live API uses per-instance memory (state can vanish between requests).
