@@ -12,6 +12,7 @@ import type {
   NewQuestInput, PatchMeInput, QuestDTO, QuestDetailDTO, QuestFilters, RedemptionDTO, SponsorDTO, AvatarClass,
 } from '@/lib/contracts';
 import { BIRMINGHAM, DISTRICTS } from '@/lib/constants';
+import { localTodayStr } from '@/lib/dates';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Raw = Record<string, any>;
@@ -242,7 +243,7 @@ export const acceptQuest = (id: string) =>
   act<QuestDetailDTO>(async () => { await call('POST', `quests/${id}/accept`); inflight = null; return detailOf(id); });
 
 export const checkIn = (id: string, _lat: number, _lng: number) =>
-  act<QuestDetailDTO>(async () => { await call('POST', `quests/${id}/checkin`); inflight = null; return detailOf(id); });
+  act<QuestDetailDTO>(async () => { await call('POST', `quests/${id}/checkin`, { today: localTodayStr() }); inflight = null; return detailOf(id); });
 
 export const abandonQuest = (id: string) =>
   act<QuestDetailDTO>(async () => { await call('POST', `quests/${id}/abandon`); inflight = null; return detailOf(id); });

@@ -4,6 +4,14 @@ const TZ = 'America/Chicago';
 export const todayStr = (): string =>
   new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
+/** The device's own calendar date (can differ from Birmingham's when you're in another timezone). */
+export const localTodayStr = (): string => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+/** A quest counts as "today" on either Birmingham's date or the device's date, so check-in never gets stuck on a timezone gap. */
+export const isTodayQuest = (ymd: string) => ymd === todayStr() || ymd === localTodayStr();
+
 const parts = (ymd: string) => ymd.split('-').map(Number) as [number, number, number];
 export const toDate = (ymd: string) => { const [y, m, d] = parts(ymd); return new Date(y, m - 1, d); };
 export const addDays = (ymd: string, n: number) => {

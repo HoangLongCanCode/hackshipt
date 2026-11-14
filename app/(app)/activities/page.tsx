@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Navigation } from 'lucide-react';
 import { Button, Card, EmptyState, Pill, SkeletonCard } from '@/components/ui';
 import { useQuests } from '@/lib/client/api';
-import { addDays, endTime, fmtDay, fmtTime, googleCalendarUrl, toDate, todayStr } from '@/lib/dates';
+import { addDays, endTime, fmtDay, fmtTime, googleCalendarUrl, isTodayQuest, toDate, todayStr } from '@/lib/dates';
 import type { QuestDTO } from '@/lib/contracts';
 
 const MY = ['ACCEPTED', 'CHECKED_IN', 'COMPLETED'];
@@ -110,7 +110,7 @@ export default function ActivitiesPage() {
 
 function ActivityCard({ q, showDay }: { q: QuestDTO; showDay?: boolean }) {
   const today = todayStr();
-  const status = q.myStatus === 'COMPLETED' ? <Pill tone="leaf">Done</Pill> : q.myStatus === 'CHECKED_IN' ? <Pill tone="sky">Checked in</Pill> : q.date === today ? <Pill tone="coral">Today</Pill> : <Pill tone="gold">Scheduled</Pill>;
+  const status = q.myStatus === 'COMPLETED' ? <Pill tone="leaf">Done</Pill> : q.myStatus === 'CHECKED_IN' ? <Pill tone="sky">Checked in</Pill> : isTodayQuest(q.date) ? <Pill tone="coral">Today</Pill> : <Pill tone="gold">Scheduled</Pill>;
   return (
     <Card className="space-y-2" data-testid="activity-card">
       <div className="flex items-start justify-between gap-2">
@@ -129,7 +129,7 @@ function ActivityCard({ q, showDay }: { q: QuestDTO; showDay?: boolean }) {
             <Navigation size={14} aria-hidden /> Directions
           </a>
           <a className="cz-btn cz-btn--secondary cz-btn--sm" href={googleCalendarUrl(q)} target="_blank" rel="noopener noreferrer">Add to Google Calendar</a>
-          <Link className="cz-btn cz-btn--ghost cz-btn--sm" href={`/quest/${q.id}`}>{q.date === today ? 'Check in' : 'Details'}</Link>
+          <Link className="cz-btn cz-btn--ghost cz-btn--sm" href={`/quest/${q.id}`}>{isTodayQuest(q.date) ? 'Check in' : 'Details'}</Link>
         </div>
       )}
     </Card>

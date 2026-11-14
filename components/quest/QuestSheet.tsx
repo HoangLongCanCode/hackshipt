@@ -9,7 +9,7 @@ import { abandonQuest, acceptQuest, checkIn, completeQuest, useMe } from '@/lib/
 import XpGain from './XpGain';
 import { CalendarDays } from 'lucide-react';
 import Link from 'next/link';
-import { fmtDay, fmtTime, fmtWhen, googleCalendarUrl, todayStr } from '@/lib/dates';
+import { fmtDay, fmtTime, fmtWhen, googleCalendarUrl, isTodayQuest } from '@/lib/dates';
 import BuildingView from './BuildingView';
 import PartyVibes from '@/components/social/PartyVibes';
 import PartyStrip from '@/components/social/PartyStrip';
@@ -30,7 +30,7 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
   const [before, setBefore] = useState<{ level: number; into: number; need: number } | null>(null);
   const m = CATEGORY_META[quest.category];
   const st = quest.myStatus;
-  const isToday = quest.date === todayStr();
+  const isToday = isTodayQuest(quest.date);
 
   async function run<T>(fn: () => Promise<T>, okMsg?: string) {
     setBusy(true);
