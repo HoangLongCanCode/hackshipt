@@ -43,10 +43,13 @@
 
 <div id="area" class="panel"><div class="k">DISTRICT</div><div id="areaName">Hover or tap an area</div><div id="areaMeta"></div></div>
 
-<aside id="drawer" class="panel" hidden>
+<aside id="drawer" class="panel" hidden data-snap="half">
+  <div id="grab" role="button" tabindex="0" aria-label="Resize sheet"></div>
   <div class="dHead"><b id="dTitle"></b><button id="dClose" aria-label="Close">✕</button></div>
   <div id="dBody"></div>
 </aside>
+
+<div id="strip" class="panel" hidden></div>
 
 <nav id="nav" class="panel">
   <button data-tab="map">🗺️<span>Map</span></button>
@@ -62,19 +65,31 @@
 <div id="modal" hidden></div>
 
 <div id="login" class="overlay">
-  <form id="loginForm" class="card" autocomplete="off">
-    <div class="eyebrow">BIRMINGHAM, AL</div>
-    <h2>Pick up a side quest.</h2>
-    <p class="muted">Local nonprofits post small volunteer quests. You show up, meet people, earn credits and climb the leaderboard. Lots of us live alone. Let's change that, one quest at a time.</p>
-    <label>Adventurer name<input id="lgName" maxlength="24" placeholder="Alex" required></label>
-    <label>Email <small>(demo: any email works, no password)</small><input id="lgEmail" type="email" placeholder="you@example.com" required></label>
-    <div class="lbl">What are you into? <small>(optional)</small></div>
-    <div id="lgInterests" class="chipRow"></div>
-    <div id="lgErr" class="err"></div>
-    <button class="btn primary" type="submit">Enter Birmingham →</button>
-    <button class="btn ghost" type="button" id="lgDemo">Quick demo: sign in as Alex</button>
-    <p class="fine">Demo app: organizations, quests, rewards and other adventurers are fictional. Map data © OpenStreetMap contributors and the City of Birmingham GIS.</p>
-  </form>
+  <div class="land">
+    <section class="landCopy">
+      <div class="wordmark">RPG Birmingham</div>
+      <h1>Birmingham has things that need doing. Go do one.</h1>
+      <p class="lede">Local nonprofits post small volunteer jobs: an hour in a teaching garden, a shift sorting food. Pick one on the map, show up, and earn credits you can spend at local shops or give to a cause.</p>
+      <ol class="how">
+        <li><b>Pick</b><span>Find a quest on the map. Filter by the group running it.</span></li>
+        <li><b>Go</b><span>Accept it and we open directions in Google Maps.</span></li>
+        <li><b>Check in</b><span>Meet the host, get their 4-digit code, collect credits and XP.</span></li>
+      </ol>
+      <p class="orgs">Quests from Birmingham Promise, Firehouse Ministries, Jones Valley Teaching Farm and Ed Farm.</p>
+    </section>
+    <form id="loginForm" class="card" autocomplete="off">
+      <h2>Start playing</h2>
+      <p class="muted">Demo: any email works, no password.</p>
+      <label>Name<input id="lgName" maxlength="24" placeholder="Alex" required></label>
+      <label>Email<input id="lgEmail" type="email" placeholder="you@example.com" required></label>
+      <div class="lbl">Interests <small>(optional, used to match you with people)</small></div>
+      <div id="lgInterests" class="chipRow"></div>
+      <div id="lgErr" class="err"></div>
+      <button class="btn primary" type="submit">Enter Birmingham</button>
+      <button class="btn ghost" type="button" id="lgDemo">Just let me in as Alex</button>
+      <p class="fine">Demo app. The organizations, quests and other adventurers are fictional and have not endorsed this. Map data (c) OpenStreetMap contributors and the City of Birmingham GIS.</p>
+    </form>
+  </div>
 </div>
 
 <script src="config.js"></script>

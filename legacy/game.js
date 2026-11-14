@@ -51,7 +51,7 @@
   $("#chips").addEventListener("click", (e) => {
     const b = e.target.closest("[data-org]"); if (!b) return;
     const id = b.dataset.org; S.orgOff.has(id) ? S.orgOff.delete(id) : S.orgOff.add(id);
-    renderChips(); renderMarkers(); if (S.tab === "quests") renderDrawer();
+    renderChips(); renderMarkers(); renderStrip(); if (S.tab === "quests") renderDrawer();
   });
 
   // ---------- map pins ----------
@@ -67,9 +67,8 @@
       if (!m) {
         const el = document.createElement("div");
         el.style.setProperty("--c", orgOf(q.orgId).color);
-        el.innerHTML = `<div class="hex"><i>${CAT[q.category] || "❔"}</i></div><div class="bang"></div>`;
+        el.innerHTML = `<div class="stem"></div><div class="ring"></div><div class="fl"><div class="hex"><i>${CAT[q.category] || "❔"}</i></div><div class="bang"></div></div><div class="lbl">${esc(q.title)}</div>`;
         el.addEventListener("click", (e) => { e.stopPropagation(); select(q.id); });
-        el.title = q.title;
         m = new maplibregl.Marker({ element: el, anchor: "center" }).setLngLat([q.lng, q.lat]).addTo(map);
         S.markers.set(q.id, m);
       }
@@ -93,24 +92,49 @@
     meta.textContent = qs.length ? `${qs.length} quest${qs.length > 1 ? "s" : ""} here${S.data.me ? ` · ${done}/${qs.length} done` : ""}` : "No quests yet";
   };
 
+  // ---------- mobile bottom sheet: peek / half / full + quest strip (layout idea from frontend-kit) ----------
+  const mobile = () => innerWidth <= 700;
+  const PEEK = 168;
+  function sheetOffset(snap) { const d = $("#drawer"), h = d.offsetHeight; const vis = snap === "peek" ? PEEK : snap === "half" ? Math.round(innerHeight * 0.5) : h; return Math.max(0, h - Math.min(vis, h)); }
+  function setSnap(snap) {
+    const d = $("#drawer"); d.dataset.snap = snap; d.style.transform = mobile() ? `translateY(${sheetOffset(snap)}px)` : "";
+    if (S.mapReady && mobile()) window.RPGB_MAP.map.easeTo({ padding: { bottom: Math.min(d.offsetHeight - sheetOffset(snap), innerHeight * 0.6), top: 0, left: 0, right: 0 }, duration: 400 });
+  }
+  (function () {
+    const g = $("#grab"), d = $("#drawer"); let st = null;
+    g.addEventListener("pointerdown", (e) => { g.setPointerCapture(e.pointerId); st = { y: e.clientY, o: sheetOffset(d.dataset.snap), v: 0, ly: e.clientY, lt: performance.now() }; d.classList.add("drag"); });
+    g.addEventListener("pointermove", (e) => { if (!st) return; const n = performance.now(); st.v = (e.clientY - st.ly) / Math.max(1, n - st.lt); st.ly = e.clientY; st.lt = n; st.cur = Math.min(sheetOffset("peek"), Math.max(0, st.o + e.clientY - st.y)); d.style.transform = `translateY(${st.cur}px)`; });
+    const up = () => { if (!st) return; d.classList.remove("drag"); const proj = (st.cur ?? st.o) + st.v * 180; const best = ["full", "half", "peek"].reduce((a, b) => Math.abs(sheetOffset(b) - proj) < Math.abs(sheetOffset(a) - proj) ? b : a); st = null; setSnap(best); };
+    g.addEventListener("pointerup", up); g.addEventListener("pointercancel", up);
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setSnap({ peek: "half", half: "full", full: "peek" }[d.dataset.snap]); } });
+    addEventListener("resize", () => { if (!$("#drawer").hidden) setSnap(d.dataset.snap); });
+  })();
+  function renderStrip() {
+    const el = $("#strip"); if (!S.data || S.tab) { el.hidden = true; return; }
+    const list = S.data.quests.filter((q) => !S.orgOff.has(q.orgId) && q.myStatus !== "COMPLETED").sort((a, b) => b.rewardCredits - a.rewardCredits);
+    el.hidden = !list.length;
+    el.innerHTML = list.map((q) => { const o = orgOf(q.orgId); return `<button class="qcard" data-act="select" data-id="${q.id}" style="--c:${o.color}"><div class="t"><span>${CAT[q.category] || ""} ${esc(q.title)}</span></div><div class="o">${esc(o.name)}</div><div class="meta">${tagsOf(q)}</div></button>`; }).join("");
+  }
+  $("#strip").addEventListener("click", (e) => { const b = e.target.closest("[data-id]"); if (b) requireLogin(() => select(b.dataset.id)); });
+
   // ---------- drawer ----------
   function openTab(tab) {
     if (tab === "map") { closeDrawer(); return; }
-    S.tab = tab; renderDrawer(); renderMarkers();
+    S.tab = tab; renderDrawer(); renderMarkers(); renderStrip();
   }
   function closeDrawer() {
     S.tab = null; S.selected = null; $("#drawer").hidden = true; document.body.classList.remove("drawer-open");
     document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === "map"));
-    renderMarkers();
+    renderMarkers(); renderStrip(); $("#drawer").style.transform = "";
     if (S.mapReady) window.RPGB_MAP.map.easeTo({ padding: { right: 0, bottom: 0, left: 0, top: 0 }, duration: 500 });
   }
   function select(id) {
-    S.selected = id; S.tab = "quest"; renderDrawer(); renderMarkers();
+    S.selected = id; S.tab = "quest"; renderDrawer(); renderMarkers(); renderStrip();
     const q = questOf(id);
     if (S.mapReady && q) {
       const small = innerWidth <= 700;
       window.RPGB_MAP.map.flyTo({ center: [q.lng, q.lat], zoom: Math.max(window.RPGB_MAP.map.getZoom(), 15.8), pitch: 60, duration: 1200,
-        padding: small ? { bottom: Math.round(innerHeight * 0.5), top: 0, left: 0, right: 0 } : { right: 380, top: 0, bottom: 0, left: 0 } });
+        padding: small ? { bottom: Math.round(innerHeight * 0.45), top: 0, left: 0, right: 0 } : { right: 380, top: 0, bottom: 0, left: 0 } });
     }
   }
   $("#dClose").onclick = closeDrawer;
@@ -121,7 +145,8 @@
     if (!S.data || !S.tab) return;
     const tab = S.tab;
     document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === (tab === "quest" ? "quests" : tab)));
-    $("#drawer").hidden = false; document.body.classList.add("drawer-open");
+    const wasHidden = $("#drawer").hidden; $("#drawer").hidden = false; document.body.classList.add("drawer-open");
+    if (wasHidden || S.snapFor !== tab) { S.snapFor = tab; setSnap(tab === "quest" ? "half" : "full"); }
     $("#dTitle").textContent = TITLES[tab];
     const body = $("#dBody"); const scroll = body.scrollTop;
     body.innerHTML = { quests: vQuests, quest: vQuest, ranks: vRanks, store: vStore, people: vPeople, me: vMe }[tab]();
@@ -139,6 +164,7 @@
       sorted.map((q) => { const o = orgOf(q.orgId); return `<button class="qcard" data-act="select" data-id="${q.id}" style="--c:${o.color}"><div class="t"><span>${CAT[q.category] || ""} ${esc(q.title)}</span>${statusTag(q)}</div><div class="o">${esc(o.name)} · ${esc(S.qDistrict[q.id] || "")}</div><div class="meta">${tagsOf(q)}</div></button>`; }).join("");
   }
 
+  const navUrl = (q) => `https://www.google.com/maps/dir/?api=1&destination=${q.lat},${q.lng}&travelmode=driving`;
   function vQuest() {
     const q = questOf(S.selected); if (!q) return `<button class="back" data-act="tab" data-tab="quests">← All quests</button><div class="fine">Quest not found.</div>`;
     const o = orgOf(q.orgId), st = q.myStatus;
@@ -146,9 +172,9 @@
     const steps = ["Accept", "Check in", "Complete"].map((t, i) => `<div class="${i < stage ? "done" : i === stage && stage < 3 ? "on" : ""}">${i < stage ? "✓ " : ""}${t}</div>`).join("");
     let action;
     if (st === "COMPLETED") action = `<div class="hint" style="color:var(--ok);border-color:rgba(61,220,151,.5);background:rgba(61,220,151,.08)">✓ Quest complete. Nice work!</div>`;
-    else if (st === "ACCEPTED") action = `<div class="hint">Head to the site: ${esc(q.address)}. Then check in.</div><button class="btn primary" data-act="checkin">📍 I'm here: check in</button><button class="btn danger" data-act="abandon">Abandon quest</button>`;
+    else if (st === "ACCEPTED") action = `<div class="hint">Head to the site: ${esc(q.address)}. Then check in.</div><a class="btn primary navBtn" href="${navUrl(q)}" target="_blank" rel="noopener">🧭 Navigate in Google Maps</a><button class="btn" data-act="checkin">📍 I'm here: check in</button><button class="btn danger" data-act="abandon">Abandon quest</button>`;
     else if (st === "CHECKED_IN") action = `<div class="hint">Ask the host for the 4-digit code.${q.demoCode ? ` <b>Demo mode: host code is ${esc(q.demoCode)}</b>` : ""}</div><input id="codeIn" class="codeIn" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off"><button class="btn primary" data-act="complete">✅ Complete quest</button><button class="btn danger" data-act="abandon">Abandon quest</button>`;
-    else action = q.spotsLeft === 0 ? `<button class="btn" disabled>Quest is full</button>` : `<button class="btn primary" data-act="accept">⚔️ Accept quest</button>`;
+    else action = q.spotsLeft === 0 ? `<button class="btn" disabled>Quest is full</button>` : `<button class="btn primary" data-act="accept">Accept quest and get directions</button>`;
     const party = q.party.length ? q.party.map((p) => `<span class="pm"><span>${esc(p.emoji)}</span>${esc(p.isMe ? "You" : p.name)}</span>`).join("") : `<span class="fine">Be the first to join.</span>`;
     return `<div class="qd" style="--c:${o.color}"><button class="back" data-act="tab" data-tab="quests">← All quests</button>
       <div class="org">${o.emoji || ""} ${esc(o.name)}</div><h3>${CAT[q.category] || ""} ${esc(q.title)}</h3>
@@ -206,9 +232,13 @@
       S.data.me.interests = [...set]; S.people = null; renderDrawer(); api("POST", "profile", { interests: [...set] }).catch(() => {}); return;
     }
     S.busy = true; b.disabled = true;
+    let navWin = null;
+    // open the tab synchronously (popup blockers), then point it at directions once the accept succeeds
+    if (act === "accept") { try { navWin = window.open("", "_blank"); } catch (e3) {} }
     try {
       if (["accept", "checkin", "abandon"].includes(act)) {
         await api("POST", `quests/${S.selected}/${act}`, {});
+        if (navWin) { const q0 = questOf(S.selected); navWin.location.href = navUrl(q0); navWin = null; }
         await refresh(); toast({ accept: "Quest accepted! Head to the site.", checkin: "Checked in. Get to work!", abandon: "Quest abandoned." }[act]);
       } else if (act === "complete") {
         const r = await api("POST", `quests/${S.selected}/complete`, { code: ($("#codeIn") || {}).value || "" });
@@ -220,6 +250,7 @@
         const r = await api("POST", "donate", { causeId: id, amount: Number(b.dataset.n) }); await refresh(); toast(`💛 Donated ${r.amount} credits to “${r.title}”. Thank you!`);
       }
     } catch (err) {
+      if (navWin) navWin.close();
       toast(err.message, true);
       if (err.code === "UNAUTHENTICATED") showLogin();
       else await refresh().catch(() => {});
@@ -257,7 +288,7 @@
   // ---------- boot ----------
   async function refresh() {
     S.data = await api("GET", "bootstrap");
-    computeDistricts(); renderHud(); renderChips(); renderMarkers(); renderDrawer();
+    computeDistricts(); renderHud(); renderChips(); renderMarkers(); renderStrip(); renderDrawer();
     if (S.data.backend === "memory") $("#msg").textContent = "demo data (in-memory)"; else $("#msg").textContent = "";
     return S.data;
   }
