@@ -95,3 +95,10 @@ RPG Birmingham: 3D Birmingham map + volunteer side quests from 4 orgs (Birmingha
 - Pushed to https://github.com/lnguyen258/shipt-hacks (main) and connected it to the Vercel project `rpg-birmingham` (team gambler7) via `vercel git connect`: pushes to main now auto-deploy to production (https://rpg-birmingham.vercel.app), other branches get previews.
 - public/assets/inspo (game screenshot references) is git-ignored so it isn't published.
 - Still pending: database. Without SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in Vercel env vars the live API uses per-instance memory (state can vanish between requests).
+
+### 2026-11-14 (Supabase connected)
+- Free-plan limit (2 projects) blocked creating a new Supabase project, so reused the existing `meetly` project (ref eqtfwndvlsltlzcxnrzr, org Gambler, us-east-1) with additive-only `rpgb_*` tables (meetly's own 7 tables untouched). Nothing deleted or paused.
+- Supabase CLI login (by user) lets me run `npx supabase db query --remote=<ref> --yes -f ...`; schema applied that way; API keys fetched via `supabase projects api-keys`.
+- Vercel prod env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (sensitive), SESSION_SECRET. Also in git-ignored .env.local for local runs against real Supabase (`set -a; . ./.env.local; set +a; node tests/smoke.js`).
+- tests/smoke.js passes against real Supabase (seeded automatically). Smoke rows cleaned up after.
+- Note: meetly is a live app marked "production"; our tables are namespaced. To remove this app later: drop the 9 rpgb_* tables.

@@ -2,3 +2,4 @@
 .env*
 node_modules
 public/assets/inspo
+supabase/.temp
