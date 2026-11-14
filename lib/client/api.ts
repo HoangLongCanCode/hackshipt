@@ -61,7 +61,11 @@ export const INTEREST_LIST: InterestDTO[] = [
 ];
 const interestOf = (slug: string): InterestDTO => INTEREST_LIST.find((i) => i.slug === slug) ?? { slug, label: slug, emoji: '✨' };
 
-const CATEGORY: Record<string, Category> = { education: 'education', food: 'food', farm: 'environment', tech: 'education', seniors: 'seniors', community: 'community' };
+// The seeded quests use a few backend-only categories (farm, tech); quests posted by a giver already use contract categories.
+const CATEGORY: Record<string, Category> = {
+  education: 'education', food: 'food', farm: 'environment', tech: 'education', seniors: 'seniors', community: 'community',
+  cleanup: 'cleanup', animals: 'animals', arts: 'arts', environment: 'environment',
+};
 
 function neighborhoodOf(lat: number, lng: number): string {
   let best = 'Birmingham', bd = Infinity;
@@ -79,7 +83,7 @@ function toMe(raw: Raw): MeDTO {
   const m = raw.me as Raw;
   const earned = (raw.ledger as Raw[] | undefined)?.filter((l) => l.delta > 0).reduce((a, l) => a + l.delta, 0) ?? 0;
   return {
-    id: m.id, email: m.email, displayName: m.name, bio: '', favoriteArtist: '', hobby: '',
+    id: m.id, email: m.email, displayName: m.name, bio: '', favoriteArtist: m.favoriteArtist ?? '', hobby: m.hobby ?? '',
     avatarClass: (m.klass ?? 'wanderer') as AvatarClass, avatarEmoji: m.avatarEmoji,
     xp: m.xp, level: m.level, xpIntoLevel: m.xpIntoLevel, xpForNext: m.xpForNext, credits: m.credits,
     interests: (m.interests as string[]).map(interestOf),
@@ -99,15 +103,17 @@ function toQuest(q: Raw, orgs: Raw[]): QuestDTO {
     rewardCredits: q.rewardCredits, rewardXp: q.rewardXp, capacity: q.capacity, participantCount: q.capacity - q.spotsLeft,
     spotsLeft: q.spotsLeft, status: 'OPEN',
     org: { id: o.id ?? q.orgId, name: o.name ?? 'Partner', emoji: o.emoji ?? '📍', verified: true },
-    chain: null, myStatus: q.myStatus ?? null,
+    chain: q.chain ?? null, myStatus: q.myStatus ?? null,
   };
 }
 
 function toDetail(q: Raw, orgs: Raw[]): QuestDetailDTO {
   return {
     ...toQuest(q, orgs),
+    verifyCode: q.verifyCode,
     party: (q.party as Raw[]).map((p) => ({
-      userId: p.name, displayName: p.isMe ? 'You' : p.name, avatarEmoji: p.emoji, avatarClass: 'wanderer' as AvatarClass, level: 1,
+      userId: p.id, displayName: p.isMe ? 'You' : p.name, avatarEmoji: p.emoji, avatarClass: (p.klass ?? 'wanderer') as AvatarClass, level: p.level ?? 1,
+      favoriteArtist: p.favoriteArtist || undefined, hobby: p.hobby || undefined,
     })),
   };
 }
@@ -165,8 +171,9 @@ const fetchers = {
   async matches(): Promise<MatchDTO[]> {
     const rows = await call<Raw[]>('GET', 'people');
     return rows.map((p) => ({
-      userId: p.name, displayName: p.name, avatarEmoji: p.emoji, avatarClass: p.klass as AvatarClass, level: p.level, score: p.score,
+      userId: p.id, displayName: p.name, avatarEmoji: p.emoji, avatarClass: p.klass as AvatarClass, level: p.level, score: p.score,
       sharedInterests: (p.shared as string[]).map(interestOf), reason: p.reason,
+      favoriteArtist: p.favoriteArtist || undefined, hobby: p.hobby || undefined,
     }));
   },
   // Demo helper: the host's code, revealed once you are checked in at the site.
@@ -181,9 +188,16 @@ const fetchers = {
     return (raw.leaderboard as Raw[]).map((r) => ({ rank: r.rank, displayName: r.isMe ? `${r.name} (you)` : r.name, avatarEmoji: r.emoji, xp: r.xp, level: r.level }));
   },
   async giverQuests(): Promise<QuestDetailDTO[]> {
-    throw new ApiError('FORBIDDEN', 'Posting quests is not available in this build.', 403);
+    const [rows, raw] = await Promise.all([call<Raw[]>('GET', 'giver/quests'), boot()]);
+    return rows.map((q) => toDetail(q, raw.orgs));
   },
-  chains: async (): Promise<ChainDTO[]> => [],
+  async chains(): Promise<ChainDTO[]> {
+    const raw = await boot();
+    return ((raw.chains ?? []) as Raw[]).map((c) => ({
+      id: c.id, title: c.title, description: c.description, bonusCredits: c.bonus,
+      steps: (c.steps as Raw[]).map((s) => ({ questId: s.questId, title: s.title, order: s.order, done: !!s.done })),
+    }));
+  },
 };
 
 // ---------- hooks ----------
@@ -229,7 +243,9 @@ export const logout = () =>
 
 export const updateProfile = (patch: PatchMeInput) =>
   act<MeDTO>(async () => {
-    await call('POST', 'profile', { interests: patch.interestSlugs });
+    await call('POST', 'profile', {
+      interests: patch.interestSlugs, name: patch.displayName, favoriteArtist: patch.favoriteArtist, hobby: patch.hobby,
+    });
     return toMe(await boot(true));
   });
 
@@ -250,7 +266,7 @@ export const completeQuest = (id: string, code: string) =>
     inflight = null;
     const raw = await boot(true);
     return {
-      me: toMe(raw), earned: { credits: r.earned.credits, xp: r.earned.xp, chainBonus: 0 },
+      me: toMe(raw), earned: { credits: r.earned.credits, xp: r.earned.xp, chainBonus: r.earned.chainBonus ?? 0 },
       levelUp: !!r.levelUp, newBadges: (r.newBadges as Raw[]).map(mapBadge), quest: toDetail((raw.quests as Raw[]).find((q) => q.id === id)!, raw.orgs),
     };
   });
@@ -276,5 +292,9 @@ export const donate = (causeId: string, amount: number) =>
     return { balance: raw.me?.credits ?? 0, cause };
   });
 
-export const giverCreateQuest = (_input: NewQuestInput): Promise<QuestDetailDTO> =>
-  Promise.reject(new ApiError('FORBIDDEN', 'Posting quests is not available in this build.', 403));
+export const giverCreateQuest = (input: NewQuestInput) =>
+  act<QuestDetailDTO>(async () => {
+    const q = await call<Raw>('POST', 'giver/quests', input);
+    inflight = null;
+    return toDetail(q, (await boot(true)).orgs);
+  });

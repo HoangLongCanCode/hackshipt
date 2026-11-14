@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "smoke": "node legacy/tests/smoke.js",
+    "smoke": "node tests/smoke.js",
     "db:schema": "node scripts/apply-schema.js"
   },
   "engines": { "node": ">=20" },

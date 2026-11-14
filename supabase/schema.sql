@@ -20,6 +20,10 @@ create table if not exists rpgb_users (
   created_at timestamptz not null default now()
 );
 
+-- Taste matching (added after the first deploy; safe to re-run).
+alter table rpgb_users add column if not exists favorite_artist text not null default '';
+alter table rpgb_users add column if not exists hobby text not null default '';
+
 create table if not exists rpgb_quests (
   id text primary key,
   org_id text not null references rpgb_orgs(id),
