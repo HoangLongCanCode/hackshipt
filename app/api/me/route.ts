@@ -15,8 +15,8 @@ export async function PATCH(req: Request) {
     const user = await requireUser();
     const input = patchMeSchema.parse(await readJson(req));
     await db.$transaction(async (tx) => {
-      if (input.displayName !== undefined || input.bio !== undefined) {
-        await tx.user.update({ where: { id: user.id }, data: { displayName: input.displayName, bio: input.bio } });
+      if (input.displayName !== undefined || input.bio !== undefined || input.favoriteArtist !== undefined || input.hobby !== undefined) {
+        await tx.user.update({ where: { id: user.id }, data: { displayName: input.displayName, bio: input.bio, favoriteArtist: input.favoriteArtist, hobby: input.hobby } });
       }
       if (input.interestSlugs) {
         const found = await tx.interest.findMany({ where: { slug: { in: input.interestSlugs } } });

@@ -14,6 +14,8 @@ model User {
   avatarClass    String   @default("wanderer") // wanderer|builder|healer|scout|teacher|keeper|bard
   avatarEmoji    String   @default("🧭")
   bio            String   @default("")
+  favoriteArtist String   @default("")
+  hobby          String   @default("")
   xp             Int      @default(0)
   credits        Int      @default(0)           // cached balance; ledger is truth; update in same $transaction
   isNpc          Boolean  @default(false)       // seeded fake adventurers for matching
@@ -54,6 +56,7 @@ model Org {
   lng          Float
   neighborhood String
   verified     Boolean @default(true)
+  imageUrl     String  @default("") // photo of the place (Wikimedia Commons); empty = decorative banner
   quests       Quest[]
   members      User[]
   causes       Cause[]

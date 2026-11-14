@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Avatar, Button, Card, EmptyState, Pill, SkeletonCard, useToast } from '@/components/ui';
 import { CLASS_META } from '@/lib/constants';
 import type { MatchDTO } from '@/lib/contracts';
-import { useLeaderboard, useMatches, useQuests } from '@/lib/client/api';
+import { useLeaderboard, useMatches, useMe, useQuests } from '@/lib/client/api';
 
 export default function PeoplePage() {
   const router = useRouter();
@@ -13,6 +13,8 @@ export default function PeoplePage() {
   const { data: matches, error, mutate } = useMatches();
   const { data: quests } = useQuests();
   const { data: board } = useLeaderboard();
+  const { data: me } = useMe();
+  const eq = (a?: string, b?: string) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
   // "Quests you could team up on": open quests that share an interest with the match.
   const teamUps = useMemo(() => {
@@ -51,6 +53,8 @@ export default function PeoplePage() {
               <Button size="sm" variant="secondary" onClick={() => wave(m)}>Wave 👋</Button>
             </div>
             <div className="flex flex-wrap gap-1">
+              {eq(m.favoriteArtist, me?.favoriteArtist) && <Pill tone="gold">🎵 {m.favoriteArtist}</Pill>}
+              {eq(m.hobby, me?.hobby) && <Pill tone="leaf">🎯 {m.hobby}</Pill>}
               {m.sharedInterests.map((i) => <Pill key={i.slug} tone="coral">{i.emoji} {i.label}</Pill>)}
             </div>
             <div className="text-sm">{m.reason}</div>

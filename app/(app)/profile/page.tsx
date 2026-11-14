@@ -1,15 +1,38 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Avatar, Button, Card, EmptyState, Pill, ProgressBar, SkeletonCard } from '@/components/ui';
+import { Avatar, Button, Card, EmptyState, Pill, ProgressBar, SkeletonCard, useToast } from '@/components/ui';
 import { CLASS_META, DISTRICTS } from '@/lib/constants';
-import { logout, useLedger, useMe } from '@/lib/client/api';
+import { logout, updateProfile, useLedger, useMe } from '@/lib/client/api';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { data: me, error, mutate } = useMe();
   const { data: ledger } = useLedger();
+  const toast = useToast();
+  const [artist, setArtist] = useState('');
+  const [hobby, setHobby] = useState('');
+  const [saving, setSaving] = useState(false);
+  useEffect(() => {
+    if (me) {
+      setArtist(me.favoriteArtist ?? '');
+      setHobby(me.hobby ?? '');
+    }
+  }, [me?.favoriteArtist, me?.hobby]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function saveTaste() {
+    setSaving(true);
+    try {
+      await updateProfile({ favoriteArtist: artist.trim(), hobby: hobby.trim() });
+      toast.success('Profile saved');
+    } catch {
+      toast.error('Could not save');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (error) return <div className="pt-24"><EmptyState emoji="😵" title="Couldn't load profile" action={<Button onClick={() => mutate()}>Try again</Button>} /></div>;
   if (!me) return <div className="px-4 pb-28 pt-24"><SkeletonCard /></div>;
@@ -40,6 +63,24 @@ export default function ProfilePage() {
           {me.badges.length === 0 && <span className="text-sm text-muted">Complete a quest to earn your first badge.</span>}
           {me.badges.map((b) => <Pill key={b.slug} tone="gold" title={b.description}>{b.icon} {b.name}</Pill>)}
         </div>
+      </section>
+
+      <section>
+        <h2 className="cz-display mb-2 text-xl">About you</h2>
+        <Card className="space-y-2">
+          <label className="block text-sm font-bold">
+            🎵 Favorite music artist
+            <input value={artist} onChange={(e) => setArtist(e.target.value)} maxLength={60} placeholder="e.g. Alabama Shakes" data-testid="artist-input"
+              className="mt-1 w-full rounded-2xl border border-border bg-surface px-3 py-2" />
+          </label>
+          <label className="block text-sm font-bold">
+            🎯 Hobby
+            <input value={hobby} onChange={(e) => setHobby(e.target.value)} maxLength={60} placeholder="e.g. Hiking" data-testid="hobby-input"
+              className="mt-1 w-full rounded-2xl border border-border bg-surface px-3 py-2" />
+          </label>
+          <div className="text-xs text-muted">Teammates on the same quest see when you share an artist or hobby.</div>
+          <Button block size="sm" loading={saving} disabled={artist.trim() === (me.favoriteArtist ?? '') && hobby.trim() === (me.hobby ?? '')} onClick={saveTaste}>Save</Button>
+        </Card>
       </section>
 
       <section>

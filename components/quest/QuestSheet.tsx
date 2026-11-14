@@ -6,6 +6,8 @@ import { CATEGORY_META } from '@/lib/constants';
 import { ApiError } from '@/lib/contracts';
 import type { CompleteResultDTO, QuestDetailDTO } from '@/lib/contracts';
 import { abandonQuest, acceptQuest, checkIn, completeQuest } from '@/lib/client/api';
+import BuildingView from './BuildingView';
+import PartyVibes from '@/components/social/PartyVibes';
 import PartyStrip from '@/components/social/PartyStrip';
 import TeamUpBanner from '@/components/social/TeamUpBanner';
 import CategoryChip from './CategoryChip';
@@ -60,8 +62,10 @@ export default function QuestSheet({ quest }: { quest: QuestDetailDTO }) {
       <div className="text-sm text-muted">
         {quest.org.emoji} {quest.org.name} · {quest.address} · {quest.durationMin} min
       </div>
+      <BuildingView quest={quest} />
       <p className="text-sm">{quest.description}</p>
       <RewardBadge credits={quest.rewardCredits} xp={quest.rewardXp} />
+      <PartyVibes quest={quest} />
       <TeamUpBanner quest={quest} />
       <PartyStrip quest={quest} />
 

@@ -7,6 +7,7 @@ import { Button, EmptyState, Sheet, SkeletonCard, type SheetSnap } from '@/compo
 import { CategoryChip, QuestCard, QuestSheet } from '@/components/quest';
 import { CATEGORIES, type Category } from '@/lib/contracts';
 import { CATEGORY_META } from '@/lib/constants';
+import DemoCodeHint from '@/components/dev/DemoCodeHint';
 import { useMe, useQuest, useQuests } from '@/lib/client/api';
 
 // three.js needs the browser: never render the canvas on the server.
@@ -43,6 +44,7 @@ export default function MapHome() {
           );
         })}
       </div>
+      <DemoCodeHint questId={selected} />
       <Sheet bottomOffset={88} snap={snap} onSnapChange={setSnap}>
         {selected ? (
           <div>

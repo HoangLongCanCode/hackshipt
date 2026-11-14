@@ -55,3 +55,9 @@ Log in with email `giver@rpgbirmingham.app`. On first visit to `/giver` (or firs
 
 ## Smoke test
 With the server running (`npm run dev` or `npm start`): `npm run smoke` (fresh user each run, re-runnable; needs `DEMO_MODE="true"`).
+
+## Taste matching, photos, demo code
+- Profiles have a favorite artist and a hobby (edit on Profile, or fill in at login). Demo Alex: Alabama Shakes, Hiking. On *Dog Day at the Shelter*, Maya shares both, and Sam shares the artist, so the sheet shows "You have things in common".
+- Quest sheets show a photo of the place (Wikimedia Commons, stored on the org; orgs without one get a banner), plus Street view and Google Maps links.
+- Demo check-in code: shown bottom-right while a quest is selected. It comes from `GET /api/demo/codes`, which returns 404 unless `DEMO_MODE="true"`. Turn `DEMO_MODE` off for any real deployment.
+- Quests tab -> "My activities" lists quests you signed up for and completed.

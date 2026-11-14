@@ -43,6 +43,9 @@ async function main() {
   const ints = await u.call('/api/me', 'PATCH', { interestSlugs: ['animals', 'gardening', 'parks'] });
   check(ints.env.ok && ints.env.data.interests.length === 3, 'PATCH /api/me saves interests');
 
+  const taste = await u.call<any>('/api/me', 'PATCH', { favoriteArtist: 'Alabama Shakes', hobby: 'Hiking' });
+  check(taste.env.ok && taste.env.data.favoriteArtist === 'Alabama Shakes' && taste.env.data.hobby === 'Hiking', 'PATCH /api/me saves favoriteArtist + hobby');
+
   console.log('quest flow');
   const list = await u.call<any[]>('/api/quests');
   const dog = list.env.ok ? list.env.data.find((q) => q.title === 'Dog Day at the Shelter') : undefined;
@@ -50,6 +53,11 @@ async function main() {
   if (!dog) throw new Error('Run `npm run db:reset` first.');
   check(dog.verifyCode === undefined, 'list never leaks verifyCode');
   const id = dog.id as string;
+  const detail = await u.call<any>(`/api/quests/${id}`);
+  const maya = detail.env.ok ? detail.env.data.party.find((p: any) => p.displayName === 'Maya') : undefined;
+  check(maya?.favoriteArtist === 'Alabama Shakes' && maya?.hobby === 'Hiking', 'party members expose favoriteArtist + hobby (shared-taste vibes)');
+  const codes = await u.call<Record<string, string>>('/api/demo/codes');
+  check(codes.env.ok && codes.env.data[id] === '1111', 'DEMO_MODE: /api/demo/codes returns the check-in code');
   const early = await u.call(`/api/quests/${id}/complete`, 'POST', { code: '1111' });
   check(early.status === 409, 'complete before accept/check-in -> 409');
   const acc = await u.call(`/api/quests/${id}/accept`, 'POST');

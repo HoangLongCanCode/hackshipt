@@ -23,6 +23,9 @@ const BADGES = [
   ['chain-breaker', 'Chain Breaker', '⛓️', 'Complete every step of a quest chain'],
 ] as const;
 
+// Photos from Wikimedia Commons (credited in the UI). Orgs without one get a decorative banner.
+const ORG_IMAGES: Record<string, string> = {"rail": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Railroad_park_bham.JPG/500px-Railroad_park_bham.JPG", "kelly": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/KellyIngramPark.jpg/500px-KellyIngramPark.jpg", "sloss": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/39/Sloss_Furnaces%2C_Birmingham_AL%2C_North_view_20160714_1.jpg/500px-Sloss_Furnaces%2C_Birmingham_AL%2C_North_view_20160714_1.jpg", "avon": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Tapestry_lawn_at_Avondale_Park_Summer.jpg/500px-Tapestry_lawn_at_Avondale_Park_Summer.jpg", "wood": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Woodlawn_High_School_Birmingham.jpg/500px-Woodlawn_High_School_Birmingham.jpg"};
+
 const ORGS = [
   { key: 'rail', name: 'Railroad Park Foundation', kind: 'nonprofit', emoji: '🚂', lat: 33.5116, lng: -86.8128, hood: 'Downtown', desc: 'Keeps the big green strip through downtown clean and lively.' },
   { key: 'bot', name: 'Birmingham Botanical Society', kind: 'nonprofit', emoji: '🌺', lat: 33.489, lng: -86.777, hood: 'Highland Park', desc: 'Tends gardens and teaches folks to grow things.' },
@@ -77,6 +80,21 @@ const CAUSES: [OrgKey, string, string, number, number][] = [
   ['rail', 'Shade Trees for Railroad Park', 'Plant a grove along the main lawn (demo).', 1000, 250],
 ];
 
+const TASTE: Record<string, { artist: string; hobby: string }> = {
+  Maya: { artist: 'Alabama Shakes', hobby: 'Hiking' },
+  Jordan: { artist: 'Taylor Swift', hobby: 'Photography' },
+  Sam: { artist: 'Alabama Shakes', hobby: 'Woodworking' },
+  Priya: { artist: 'Beyonce', hobby: 'Painting' },
+  Chris: { artist: 'St. Paul & The Broken Bones', hobby: 'Guitar' },
+  Dee: { artist: 'Stevie Wonder', hobby: 'Baking' },
+  Marcus: { artist: 'Kendrick Lamar', hobby: 'Running' },
+  Lena: { artist: 'Taylor Swift', hobby: 'Hiking' },
+  Tom: { artist: 'Daft Punk', hobby: 'Chess' },
+  Rosa: { artist: 'Alabama Shakes', hobby: 'Gardening' },
+  Ben: { artist: 'Bob Dylan', hobby: 'Reading' },
+  Ava: { artist: 'Taylor Swift', hobby: 'Hiking' },
+};
+
 interface NpcSeed { name: string; interests: string[]; done: number[]; active?: number[]; donated?: number }
 const NPCS: NpcSeed[] = [
   { name: 'Maya', interests: ['animals', 'parks', 'gardening'], done: [2, 5], active: [1] },
@@ -108,7 +126,7 @@ async function main() {
 
   const orgId: Record<string, string> = {};
   for (const o of ORGS) {
-    const row = await db.org.create({ data: { name: o.name, kind: o.kind, emoji: o.emoji, lat: o.lat, lng: o.lng, neighborhood: o.hood, description: `${o.desc} (demo)`, verified: true } });
+    const row = await db.org.create({ data: { name: o.name, kind: o.kind, emoji: o.emoji, lat: o.lat, lng: o.lng, neighborhood: o.hood, description: `${o.desc} (demo)`, verified: true, imageUrl: ORG_IMAGES[o.key] ?? '' } });
     orgId[o.key] = row.id;
   }
 
@@ -140,7 +158,7 @@ async function main() {
 
   // Demo user
   const demo = await db.user.create({
-    data: { email: 'demo@rpgbirmingham.app', displayName: 'Alex the Wanderer', avatarClass: 'wanderer', avatarEmoji: CLASS_META.wanderer.emoji, bio: 'New in town, ready for side quests.', xp: 0, credits: 40 },
+    data: { email: 'demo@rpgbirmingham.app', displayName: 'Alex the Wanderer', avatarClass: 'wanderer', avatarEmoji: CLASS_META.wanderer.emoji, bio: 'New in town, ready for side quests.', favoriteArtist: 'Alabama Shakes', hobby: 'Hiking', xp: 0, credits: 40 },
   });
   for (const slug of ['animals', 'gardening', 'parks']) await db.userInterest.create({ data: { userId: demo.id, interestId: interestId[slug] } });
   await db.ledgerEntry.create({ data: { userId: demo.id, delta: 40, kind: 'BONUS', note: 'Welcome to RPG Birmingham!', refType: null } });
@@ -159,7 +177,7 @@ async function main() {
     const bonus = chainSteps.every((s) => n.done.includes(s)) ? 60 : 0;
     credits += bonus - donated;
     const user = await db.user.create({
-      data: { email: `${n.name.toLowerCase()}@npc.rpgbirmingham.app`, displayName: n.name, avatarClass: cls, avatarEmoji: CLASS_META[cls].emoji, bio: 'Local adventurer (demo).', xp, credits, isNpc: true },
+      data: { email: `${n.name.toLowerCase()}@npc.rpgbirmingham.app`, displayName: n.name, avatarClass: cls, avatarEmoji: CLASS_META[cls].emoji, bio: 'Local adventurer (demo).', favoriteArtist: TASTE[n.name]?.artist ?? '', hobby: TASTE[n.name]?.hobby ?? '', xp, credits, isNpc: true },
     });
     for (const slug of n.interests) await db.userInterest.create({ data: { userId: user.id, interestId: interestId[slug] } });
     for (let j = 0; j < done.length; j++) {

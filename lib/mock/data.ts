@@ -25,9 +25,9 @@ export const MOCK_BADGES: BadgeDTO[] = [
 ];
 
 const orgs = {
-  rail: { id: 'org-rail', name: 'Railroad Park Foundation', emoji: '🚂', verified: true },
+  rail: { id: 'org-rail', name: 'Railroad Park Foundation', emoji: '🚂', verified: true, imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Railroad_park_bham.JPG/500px-Railroad_park_bham.JPG' },
   bot: { id: 'org-bot', name: 'Birmingham Botanical Society', emoji: '🌺', verified: true },
-  kelly: { id: 'org-kelly', name: 'Kelly Ingram Park Friends', emoji: '🕊️', verified: true },
+  kelly: { id: 'org-kelly', name: 'Kelly Ingram Park Friends', emoji: '🕊️', verified: true, imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/KellyIngramPark.jpg/500px-KellyIngramPark.jpg' },
   sloss: { id: 'org-sloss', name: 'Sloss Furnaces Volunteers', emoji: '🏭', verified: true },
   avon: { id: 'org-avon', name: 'Avondale Community Garden', emoji: '🥕', verified: true },
   humane: { id: 'org-humane', name: 'Greater Birmingham Humane Society', emoji: '🐕', verified: true },
@@ -92,7 +92,7 @@ export const MOCK_CAUSES: CauseDTO[] = [
 ];
 
 export const MOCK_ME: MeDTO = {
-  id: 'me', email: 'demo@rpgbirmingham.app', displayName: 'Alex the Wanderer', bio: '',
+  id: 'me', email: 'demo@rpgbirmingham.app', displayName: 'Alex the Wanderer', bio: '', favoriteArtist: 'Alabama Shakes', hobby: 'Hiking',
   avatarClass: 'wanderer', avatarEmoji: '🧭',
   xp: 0, level: 1, xpIntoLevel: 0, xpForNext: 40, credits: 40,
   interests: MOCK_INTERESTS.filter((i) => ['animals', 'gardening', 'parks'].includes(i.slug)),
@@ -108,3 +108,14 @@ export const MOCK_MATCHES: MatchDTO[] = [
   { userId: 'n4', displayName: 'Priya', avatarEmoji: '📚', avatarClass: 'teacher', level: 5, score: 6, sharedInterests: [MOCK_INTERESTS[6]], reason: 'Both into Gardening' },
   { userId: 'n5', displayName: 'Chris', avatarEmoji: '🎨', avatarClass: 'bard', level: 2, score: 4, sharedInterests: [MOCK_INTERESTS[1]], reason: 'Both into Parks' },
 ];
+
+// Teammates already signed up for Dog Day, so party vibes show in offline mode too.
+const dog = MOCK_QUESTS.find((x) => x.id === 'q-dog');
+if (dog) {
+  dog.party = [
+    { userId: 'n1', displayName: 'Maya', avatarEmoji: '🍞', avatarClass: 'keeper', level: 2, favoriteArtist: 'Alabama Shakes', hobby: 'Hiking' },
+    { userId: 'n2', displayName: 'Jordan', avatarEmoji: '🌲', avatarClass: 'scout', level: 3, favoriteArtist: 'Taylor Swift', hobby: 'Photography' },
+  ];
+  dog.participantCount = 2;
+  dog.spotsLeft = dog.capacity - 2;
+}

@@ -15,16 +15,16 @@ export interface QuestDTO {
   interestSlugs: string[]; lat: number; lng: number; neighborhood: string; address: string;
   difficulty: 1 | 2 | 3 | 4 | 5; durationMin: number; rewardCredits: number; rewardXp: number;
   capacity: number; participantCount: number; spotsLeft: number; status: 'OPEN' | 'CLOSED';
-  org: { id: string; name: string; emoji: string; verified: boolean };
+  org: { id: string; name: string; emoji: string; verified: boolean; imageUrl?: string };
   chain?: { id: string; title: string; order: number; total: number } | null;
   myStatus?: MyStatus | null;
 }
-export interface PartyMemberDTO { userId: string; displayName: string; avatarEmoji: string; avatarClass: AvatarClass; level: number }
+export interface PartyMemberDTO { userId: string; displayName: string; avatarEmoji: string; avatarClass: AvatarClass; level: number; favoriteArtist?: string; hobby?: string }
 export interface QuestDetailDTO extends QuestDTO { party: PartyMemberDTO[]; verifyCode?: string /* only for giver's own org */ }
 
 export interface BadgeDTO { slug: string; name: string; icon: string; description: string; earnedAt?: string }
 export interface MeDTO {
-  id: string; email: string; displayName: string; bio: string;
+  id: string; email: string; displayName: string; bio: string; favoriteArtist: string; hobby: string;
   avatarClass: AvatarClass; avatarEmoji: string;
   xp: number; level: number; xpIntoLevel: number; xpForNext: number; credits: number;
   interests: InterestDTO[]; badges: BadgeDTO[];
@@ -40,7 +40,7 @@ export interface SponsorDTO { id: string; name: string; emoji: string; descripti
 export interface RedemptionDTO { id: string; code: string; offer: OfferDTO; sponsorName: string; balance: number }
 export interface CauseDTO { id: string; title: string; description: string; orgName: string; goalCredits: number; raisedCredits: number }
 export interface LedgerEntryDTO { id: string; delta: number; kind: 'EARN' | 'BONUS' | 'SPEND' | 'DONATE'; note: string; createdAt: string }
-export interface MatchDTO { userId: string; displayName: string; avatarEmoji: string; avatarClass: AvatarClass; level: number; score: number; sharedInterests: InterestDTO[]; reason: string }
+export interface MatchDTO { userId: string; displayName: string; avatarEmoji: string; avatarClass: AvatarClass; level: number; score: number; sharedInterests: InterestDTO[]; reason: string; favoriteArtist?: string; hobby?: string }
 export interface ChainDTO { id: string; title: string; description: string; bonusCredits: number; steps: { questId: string; title: string; order: number; done: boolean }[] }
 export interface NewQuestInput { title: string; description: string; category: Category; lat: number; lng: number; neighborhood: string; address: string; difficulty: 1 | 2 | 3 | 4 | 5; durationMin: number; capacity: number; interestSlugs: string[] }
 export interface LeaderboardRowDTO { rank: number; displayName: string; avatarEmoji: string; xp: number; level: number }
@@ -73,6 +73,8 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export const patchMeSchema = z.object({
   displayName: z.string().trim().min(1).max(40).optional(),
   bio: z.string().max(280).optional(),
+  favoriteArtist: z.string().trim().max(60).optional(),
+  hobby: z.string().trim().max(60).optional(),
   interestSlugs: z.array(z.string()).max(12).optional(),
 });
 export type PatchMeInput = z.infer<typeof patchMeSchema>;

@@ -44,6 +44,7 @@ const fetchers = {
   causes: (): Promise<CauseDTO[]> => (USE_MOCKS ? mock.causes() : call('/api/causes')),
   ledger: (): Promise<LedgerEntryDTO[]> => (USE_MOCKS ? mock.ledger() : call('/api/ledger')),
   matches: (): Promise<MatchDTO[]> => (USE_MOCKS ? mock.matches() : call('/api/matches')),
+  demoCodes: (): Promise<Record<string, string>> => (USE_MOCKS ? mock.demoCodes() : call('/api/demo/codes')),
   leaderboard: (): Promise<LeaderboardRowDTO[]> => (USE_MOCKS ? mock.leaderboard() : call('/api/leaderboard?scope=neighborhood')),
   giverQuests: (): Promise<QuestDetailDTO[]> => (USE_MOCKS ? mock.giverQuests() : call('/api/giver/quests')),
   chains: (): Promise<ChainDTO[]> => (USE_MOCKS ? mock.chains() : call('/api/chains')),
@@ -60,6 +61,8 @@ export const useLedger = () => useSWR<LedgerEntryDTO[]>('ledger', fetchers.ledge
 export const useMatches = () => useSWR<MatchDTO[]>('matches', fetchers.matches);
 export const useChains = () => useSWR<ChainDTO[]>('chains', fetchers.chains);
 
+/** Demo-only: check-in verify codes (server returns 404 unless DEMO_MODE=true). */
+export const useDemoCodes = () => useSWR<Record<string, string>>('demo-codes', fetchers.demoCodes, { shouldRetryOnError: false });
 export const useLeaderboard = () => useSWR<LeaderboardRowDTO[]>('leaderboard', fetchers.leaderboard);
 export const useGiverQuests = () => useSWR<QuestDetailDTO[]>('giver-quests', fetchers.giverQuests, { shouldRetryOnError: false });
 

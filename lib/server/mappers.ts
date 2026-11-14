@@ -28,7 +28,7 @@ export function toQuestDTO(q: QuestRow, userId?: string | null): QuestDTO {
     // spots are taken by people currently on the quest, not by finished adventurers
     spotsLeft: Math.max(0, q.capacity - active.length),
     status: q.status as 'OPEN' | 'CLOSED',
-    org: { id: q.org.id, name: q.org.name, emoji: q.org.emoji, verified: q.org.verified },
+    org: { id: q.org.id, name: q.org.name, emoji: q.org.emoji, verified: q.org.verified, imageUrl: q.org.imageUrl || undefined },
     chain: q.chain ? { id: q.chain.id, title: q.chain.title, order: q.chainOrder ?? 1, total: q.chain._count.quests } : null,
     myStatus: mine ? (mine.status as MyStatus) : null,
   };
@@ -41,6 +41,7 @@ export function toQuestDetailDTO(q: QuestRow, user?: { id: string; orgId: string
     .map((p) => ({
       userId: p.userId, displayName: p.user.displayName, avatarEmoji: p.user.avatarEmoji,
       avatarClass: p.user.avatarClass as AvatarClass, level: levelFromXp(p.user.xp),
+      favoriteArtist: p.user.favoriteArtist, hobby: p.user.hobby,
     }));
   const dto: QuestDetailDTO = { ...toQuestDTO(q, user?.id), party };
   if (user?.orgId && user.orgId === q.orgId) dto.verifyCode = q.verifyCode;
@@ -70,7 +71,7 @@ export async function loadMe(userId: string): Promise<MeDTO> {
   const neighborhoods = Array.from(new Set(u.participations.map((p) => p.quest.neighborhood)));
   const lp = levelProgress(u.xp);
   return {
-    id: u.id, email: u.email, displayName: u.displayName, bio: u.bio,
+    id: u.id, email: u.email, displayName: u.displayName, bio: u.bio, favoriteArtist: u.favoriteArtist, hobby: u.hobby,
     avatarClass: u.avatarClass as AvatarClass, avatarEmoji: u.avatarEmoji,
     xp: u.xp, level: lp.level, xpIntoLevel: lp.xpIntoLevel, xpForNext: lp.xpForNext, credits: u.credits,
     interests: u.interests.map((i) => ({ slug: i.interest.slug, label: i.interest.label, emoji: i.interest.emoji })),

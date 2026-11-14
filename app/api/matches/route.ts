@@ -37,7 +37,7 @@ export async function GET() {
       .filter(({ u, p }) => u.id !== me.id && (p.interestSlugs.some((s) => mine.interestSlugs.includes(s)) || p.questIds.some((q) => mine.questIds.includes(q))))
       .map(({ u, p }) => ({
         userId: u.id, displayName: u.displayName, avatarEmoji: u.avatarEmoji, avatarClass: u.avatarClass as AvatarClass,
-        level: levelFromXp(u.xp), score: matchScore(mine, p),
+        level: levelFromXp(u.xp), score: matchScore(mine, p), favoriteArtist: u.favoriteArtist, hobby: u.hobby,
         sharedInterests: u.interests.filter((i) => mine.interestSlugs.includes(i.interest.slug)).map((i) => ({ slug: i.interest.slug, label: i.interest.label, emoji: i.interest.emoji })),
         reason: matchReason(mine, p, labels, titles),
       }))

@@ -57,9 +57,11 @@ export const mock = {
     return delay(state.me);
   },
   logout: () => { state.loggedIn = false; return delay({}); },
-  updateProfile: (p: { displayName?: string; bio?: string; interestSlugs?: string[] }) => {
+  updateProfile: (p: { displayName?: string; bio?: string; favoriteArtist?: string; hobby?: string; interestSlugs?: string[] }) => {
     if (p.displayName) state.me.displayName = p.displayName;
     if (p.bio !== undefined) state.me.bio = p.bio;
+    if (p.favoriteArtist !== undefined) state.me.favoriteArtist = p.favoriteArtist;
+    if (p.hobby !== undefined) state.me.hobby = p.hobby;
     if (p.interestSlugs) state.me.interests = MOCK_INTERESTS.filter((i) => p.interestSlugs!.includes(i.slug));
     return delay(state.me);
   },
@@ -82,7 +84,7 @@ export const mock = {
     if (qq.spotsLeft <= 0) throw new ApiError('QUEST_FULL', 'This quest is full');
     qq.myStatus = 'ACCEPTED';
     qq.participantCount++;
-    qq.party.push({ userId: state.me.id, displayName: state.me.displayName, avatarEmoji: state.me.avatarEmoji, avatarClass: state.me.avatarClass, level: state.me.level });
+    qq.party.push({ userId: state.me.id, displayName: state.me.displayName, avatarEmoji: state.me.avatarEmoji, avatarClass: state.me.avatarClass, level: state.me.level, favoriteArtist: state.me.favoriteArtist, hobby: state.me.hobby });
     setCounts(qq);
     return delay(qq);
   },
@@ -176,6 +178,7 @@ export const mock = {
   },
   ledger: () => delay(state.ledger.slice(0, 50)),
   matches: (): Promise<MatchDTO[]> => delay(MOCK_MATCHES),
+  demoCodes: (): Promise<Record<string, string>> => delay({ ...CODES }),
   leaderboard: (): Promise<LeaderboardRowDTO[]> =>
     delay([
       { rank: 1, displayName: 'Maya', avatarEmoji: '🐾', xp: 520, level: 4 },
