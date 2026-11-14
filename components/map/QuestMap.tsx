@@ -30,9 +30,9 @@ export interface QuestMapProps {
 
 // Warm theme (values from components/ui/cozy.css)
 const T = {
-  bg: '#f0cf6e', // warm golden ground
-  roadCasing: '#b98a2c', roads: ['#fff4c9', '#fff4c9', '#fdeeb5', '#f9e6a0', '#f4de8f'],
-  bldLow: '#f8e2a0', bldMid: '#eab34e', bldHigh: '#d77a2a', bldLine: '#a8761f',
+  bg: '#f6e0a0', // warm golden ground
+  roadCasing: '#c99a3c', roads: ['#fffaE0', '#fffae0', '#fff5cc', '#fcefb8', '#f8e8a8'],
+  bldLow: '#fbecc2', bldMid: '#efc366', bldHigh: '#df8d3d', bldLine: '#a8761f',
   hood: '#9a6a1a', hoodHover: '#f07c5a', hoodSel: '#d8603f',
 };
 const BOUNDS = { west: -86.92, south: 33.43, east: -86.70, north: 33.62 };
