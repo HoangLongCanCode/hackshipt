@@ -102,3 +102,8 @@ RPG Birmingham: 3D Birmingham map + volunteer side quests from 4 orgs (Birmingha
 - Vercel prod env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (sensitive), SESSION_SECRET. Also in git-ignored .env.local for local runs against real Supabase (`set -a; . ./.env.local; set +a; node tests/smoke.js`).
 - tests/smoke.js passes against real Supabase (seeded automatically). Smoke rows cleaned up after.
 - Note: meetly is a live app marked "production"; our tables are namespaced. To remove this app later: drop the 9 rpgb_* tables.
+
+### 2026-11-14 (production verified)
+- Correction: the earlier "production state lost between requests" diagnosis was wrong. The real bug was a Vercel 404 on multi-segment routes (/api/quests/:id/:action), since `api/[...path].js` only matched single-segment paths. Fixed with api/quests/[id]/[action].js + shared lib/http.js.
+- Verified on https://rpg-birmingham.vercel.app (backend: supabase): login, accept, check-in, wrong code rejected, complete (+credits/xp/level/class), leaderboard, full Playwright flow. Test accounts removed afterwards; DB holds only the seeded 12 NPCs + 15 seeded sign-ups.
+- Deploys happen automatically on push to main (GitHub lnguyen258/shipt-hacks -> Vercel project rpg-birmingham, team gambler7).
